@@ -1,0 +1,69 @@
+Here is a simple implementation of the game in Java:
+
+```java
+import java.util.*;
+
+public class DiceGame {
+    private static final int MAX_TURNS = 12;
+    private static final int MAX_POINTS = 10;
+    private static final String COMPUTER = "Computer";
+    private static final String[] COLORS = {"Red", "Green", "Blue", "Purple"};
+    private static final Random RANDOM = new Random();
+
+    private static class Player {
+        String name;
+        int points;
+        String color;
+
+        Player(String name, String color) {
+            this.name = name;
+            this.points = 0;
+            this.color = color;
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Player[] players = new Player[3];
+        for (int i = 0; i < 3; i++) {
+            System.out.println("Enter name for player " + (i + 1) + ":");
+            String name = scanner.nextLine();
+            while (name.equals(COMPUTER)) {
+                System.out.println("Name cannot be Computer. Enter another name:");
+                name = scanner.nextLine();
+            }
+            players[i] = new Player(name, COLORS[i]);
+        }
+
+        int turn = 0;
+        while (turn < MAX_TURNS) {
+            for (Player player : players) {
+                int dice = RANDOM.nextInt(6) + 1;
+                if (dice == 1 && RANDOM.nextBoolean()) {
+                    dice = RANDOM.nextInt(6) + 1;
+                }
+                if (dice == 2) {
+                    dice *= 3;
+                } else if (dice % 2 == 0) {
+                    dice /= 2;
+                }
+                player.points += dice;
+                if (player.points > MAX_POINTS) {
+                    player.color = COLORS[3];
+                }
+                System.out.println(player.name + " rolled a " + dice + ". Total points: " + player.points + ". Color: " + player.color);
+                if (player.points > MAX_POINTS) {
+                    System.out.println("Congratulations " + player.name + " you won the game! You are the best!");
+                    return;
+                }
+                if (dice == 6) {
+                    break;
+                }
+            }
+            turn++;
+        }
+    }
+}
+```
+
+This code does not handle the "Equality!" condition and the machine deciding the players' turn order. These features would require a more complex implementation.
