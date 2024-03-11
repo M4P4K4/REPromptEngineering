@@ -116,6 +116,14 @@ def create_prompt_with_gsheet(smells, game):
 
 def generate_code(smells, game, model, temperature):
     output_id = str(uuid.uuid4())
+
+    ## alternative idea for counting the output files
+    # with open("../../outputs/overview_" + game.value + ".csv", "r") as csvfile:
+    #     for count, line in enumerate(csvfile):
+    #         pass
+    #     output_id = count + 1
+    #     csvfile.close()
+
     if not smells:
         smelly = False
     else:
@@ -139,7 +147,7 @@ def generate_code(smells, game, model, temperature):
     # input_file = open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x")
 
     # write output
-    with open("../../outputs/" + game.value + "/" + "output_" + output_id + ".txt", "x") as output_file:
+    with open("../../outputs/" + game.value + "/output/output_" + output_id + ".txt", "x") as output_file:
         for chunk in stream:
             content = chunk.choices[0].delta.content
             if content is not None:
@@ -147,12 +155,12 @@ def generate_code(smells, game, model, temperature):
         output_file.close()
 
     # write prompt
-    with open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x") as input_file:
+    with open("../../outputs/" + game.value + "/prompt/prompt_" + output_id + ".txt", "x") as input_file:
         input_file.write(given_prompt)
         input_file.close()
 
     # write overview csv
-    with open("../../outputs/overview_" + game.value + ".csv", "a", encoding="utf8", newline='') as csvfile:
+    with open("../../outputs/" + game.value + "/overview_" + game.value + ".csv", "a", encoding="utf8", newline='') as csvfile:
         fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "UUID"]
         writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
         smells_string = ""
