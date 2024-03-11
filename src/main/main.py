@@ -56,6 +56,7 @@ def create_prompt_with_csv(smells, game):
     return prompt
 
 
+# source from most of the code: https://github.com/googleworkspace/python-samples/blob/main/sheets/quickstart/quickstart.py
 def create_prompt_with_gsheet(smells, game):
     # If modifying these scopes, delete the file token.json.
     scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
