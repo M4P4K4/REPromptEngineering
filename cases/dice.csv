@@ -1,0 +1,25 @@
+Rule ID;Original Rule;Requirement Type;Smell;Type;Smelly Rule;Non Smelly Option 1;Non Smelly Option 2;Additional Infos
+1;1;Base;;;;A dice-throwing game for three players.;;
+2;2;Base;;;;Every player starts with 0 points.;;
+3;3;Base;;;;The players take turns.;;
+4;4;Base;;;;With each turn, a player throws a dice.;;
+5;5;Base;;;;The dice count gets added to the player's points.;;
+6;6;Base;;;;The dice count and the player points are then printed.;;
+7;8;Base;;;;The game ends after 12 turns.;;
+8;9;Altered;Ambiguous Adjective or Adverb;lexical;The game also terminates if one player has significantly more points than the others.;The game also terminates if one player has 10 more points than any other player.;The game also terminates if one player has at least 10 points and 50% more points than any other player.;
+9;10;Altered;Optional;lexical;If the dice count is 1, the player may possibly throw the dice again;"At the beginning of the game, the player shall decide if the following rule holds:
+If the dice count is 1, the player throws the dice again.";"If the dice count is 1, the player gets asked if they want to throw the dice again.
+If the player wants to throw the dice again, they can then throw the dice again.";
+10;11;Altered;Vague;lexical;There will be some sort of congratulations for the winner.;The winner will receive the message: “Congratulations ” + player name + “ you won the game! You are the best!”;The winner will receive a poem that is created by AI on the basis of the prompt: “Create a congratulatory poem for the winner of a dice-throwing game among three players. Include squirrels.”;
+11;12;Altered;Lexical contradiction;semantic;The player point colors shall always be red, green, and blue for player 1, player 2, and player 3 respectively. If the points get above 10, they shall turn purple.;In the beginning, the player point colors shall be red, green, and blue for player 1, player 2, and player 3 respectively. If a player's points get above 10, they shall turn purple.;The player point colors shall always be red, green, and blue for player 1, player 2, and player 3 respectively. If the points get above 10, they shall turn darker.;
+12;13;Altered;Logical inconsistencies;semantic;"If the current player throws a 6, the next player’s turn is skipped.
+If the previous player threw a 6, the current player can throw their dice twice.";If the current player throws a 6, the next player’s turn is skipped.;If the previous player threw a 6, the current player can throw their dice twice.;
+13;14;Altered;Numerical discrepancies;semantic;"If the dice count is even, it shall be halved.
+If the dice count is 2, it shall be tripled.";"If the dice count is even but not 2, it shall be halved.
+If the dice count is 2, it shall be tripled.";"If the dice count is even but not 2, it shall be halved.
+If the dice count is 2, it shall be multiplied by three halves.";
+14;15;Altered;Anaphora;syntactic;"All players’ points shall be colored in different colors.
+If they turn equal at any point in the game, the game shall print: “Equality!”";If the points turn equal at any point in the game, the game shall print: “Equality!”;"All players’ points shall be colored in different colors.
+If the colors turn equal at any point in the game, the game shall print: “Equality!”";
+15;16;Altered;Passive voice;syntactic;The players’ turn order must be decided at the beginning of the game.;The machine shall decide the players’ turn order at the beginning of the game.;The players shall decide the players’ turn order by input at the beginning of the game.;
+16;17;Altered;Positive;syntactic;The players’ names shall not be “Computer”;The players shall enter their names. If they enter “Computer”, the system shall print “Name cannot be Computer” and ask for the name again.;The players shall be named “Player 1”, “Player 2”, and “Player 3”.;
