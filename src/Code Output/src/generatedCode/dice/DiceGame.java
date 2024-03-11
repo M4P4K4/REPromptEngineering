@@ -2,6 +2,10 @@ package generatedCode.dice;
 
 import java.util.*;
 
+/**
+ * commented version of:
+ * a34b28b6-1362-4010-a993-ebcf28b8d715
+ */
 public class DiceGame {
     private static final int MAX_TURNS = 12; // Rule 7
     private static final int MAX_DIFF = 10;

@@ -35,11 +35,12 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
 def main():
-    smells = []
-    # smells = [8, 9]
-    generate_code(smells, Game.DICE, Model.GPT_4, 0)
+    generate_code([], Game.PONG, Model.GPT_4, 0)
+    generate_code([], Game.SNAKE, Model.GPT_4, 0)
+    generate_code([], Game.SCOPA, Model.GPT_4, 0)
 
 
+# noinspection PyTypeChecker
 def create_prompt_with_csv(smells, game):
     prompt = "Create java code for the following description of a game: "
 
@@ -117,7 +118,7 @@ def create_prompt_with_gsheet(smells, game):
 def generate_code(smells, game, model, temperature):
     output_id = str(uuid.uuid4())
 
-    ## alternative idea for counting the output files
+    # alternative idea for counting the output files
     # with open("../../outputs/overview_" + game.value + ".csv", "r") as csvfile:
     #     for count, line in enumerate(csvfile):
     #         pass
@@ -160,7 +161,8 @@ def generate_code(smells, game, model, temperature):
         input_file.close()
 
     # write overview csv
-    with open("../../outputs/" + game.value + "/overview_" + game.value + ".csv", "a", encoding="utf8", newline='') as csvfile:
+    with open("../../outputs/" + game.value + "/overview_" + game.value + ".csv", "a", encoding="utf8",
+              newline='') as csvfile:
         fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "UUID"]
         writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
         smells_string = ""
@@ -170,8 +172,12 @@ def generate_code(smells, game, model, temperature):
             if len(smells) - 1 > idx:
                 smells_string += ", "
 
-        # writer.writeheader()
-        writer.writerow({"Ground Truth": (not smelly), "Smelly Rules": smells_string, "Model": model.value, "Temperature": temperature, "UUID": output_id})
+        writer.writeheader()
+        writer.writerow({"Ground Truth": (not smelly),
+                         "Smelly Rules": smells_string,
+                         "Model": model.value,
+                         "Temperature": temperature,
+                         "UUID": output_id})
 
 
 if __name__ == '__main__':
