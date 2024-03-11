@@ -153,7 +153,7 @@ def generate_code(smells, game, model, temperature):
 
     # write overview csv
     with open("../../outputs/overview_" + game.value + ".csv", "a", encoding="utf8", newline='') as csvfile:
-        fieldnames = ["Ground Truth", "Smelly Rules", "UUID"]
+        fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "UUID"]
         writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
         smells_string = ""
 
@@ -163,7 +163,7 @@ def generate_code(smells, game, model, temperature):
                 smells_string += ", "
 
         # writer.writeheader()
-        writer.writerow({"Ground Truth": (not smelly), "Smelly Rules": smells_string, "UUID": output_id})
+        writer.writerow({"Ground Truth": (not smelly), "Smelly Rules": smells_string, "Model": model.value, "Temperature": temperature, "UUID": output_id})
 
 
 if __name__ == '__main__':
