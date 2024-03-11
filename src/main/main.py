@@ -1,10 +1,17 @@
 import csv
 import os
 import uuid
+
 from openai import OpenAI
 from dotenv import load_dotenv
 from pathlib import Path
 from enum import Enum
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 
 
 class Game(Enum):
@@ -28,14 +35,12 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
 def main():
-    # Array with all smells we want to implement
-    # smells = [1, 3]
-    smells = [8, 9]
+    smells = []
+    # smells = [8, 9]
     generate_code(smells, Game.DICE, Model.GPT_4, 0)
 
 
-# noinspection PyTypeChecker
-def create_prompt(smells, game):
+def create_prompt_with_csv(smells, game):
     prompt = "Create java code for the following description of a game: "
 
     with open("../../cases/" + game.value + ".csv", encoding="utf8") as csvfile:
@@ -51,6 +56,63 @@ def create_prompt(smells, game):
     return prompt
 
 
+def create_prompt_with_gsheet(smells, game):
+    # If modifying these scopes, delete the file token.json.
+    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    gsheet_id = os.getenv("GSHEET_ID")
+    gsheet_range = game.value.title() + "!A2:I"
+
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is created automatically on the first time.
+    if os.path.exists("../../token.json"):
+        creds = Credentials.from_authorized_user_file("../../token.json", scopes)
+
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "../../credentials.json", scopes
+            )
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open("../../token.json", "w") as token:
+            token.write(creds.to_json())
+
+    try:
+        service = build("sheets", "v4", credentials=creds)
+
+        # Call the Sheets API
+        sheet = service.spreadsheets()
+        result = (
+            sheet.values()
+            .get(spreadsheetId=gsheet_id, range=gsheet_range)
+            .execute()
+        )
+        values = result.get("values", [])
+
+        if not values:
+            print("No data found.")
+            return
+
+        # create the prompt from results
+        prompt = "Create java code for the following description of a game: "
+        for row in values:
+            if int(row[0]) in smells and row[5]:
+                row_id = 5
+                prompt += row[row_id] + " "
+            elif row[6]:
+                row_id = 6
+                prompt += row[row_id] + " "
+        prompt.rstrip()
+
+        return prompt
+
+    except HttpError as err:
+        print(err)
+
+
 def generate_code(smells, game, model, temperature):
     output_id = str(uuid.uuid4())
     if not smells:
@@ -58,7 +120,8 @@ def generate_code(smells, game, model, temperature):
     else:
         smelly = True
 
-    given_prompt = create_prompt(smells, game)
+    # given_prompt = create_prompt_with_csv(smells, game)
+    given_prompt = create_prompt_with_gsheet(smells, game)
 
     # send input
     stream = client.chat.completions.create(
@@ -71,19 +134,21 @@ def generate_code(smells, game, model, temperature):
         stream=True,
     )
 
-    output_file = open("../../outputs/" + game.value + "/" + "output_" + output_id + ".txt", "x")
-    input_file = open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x")
+    # output_file = open("../../outputs/" + game.value + "/" + "output_" + output_id + ".txt", "x")
+    # input_file = open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x")
 
     # write output
-    for chunk in stream:
-        content = chunk.choices[0].delta.content
-        if content is not None:
-            output_file.write(content)
-    output_file.close()
+    with open("../../outputs/" + game.value + "/" + "output_" + output_id + ".txt", "x") as output_file:
+        for chunk in stream:
+            content = chunk.choices[0].delta.content
+            if content is not None:
+                output_file.write(content)
+        output_file.close()
 
     # write prompt
-    input_file.write(given_prompt)
-    input_file.close()
+    with open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x") as input_file:
+        input_file.write(given_prompt)
+        input_file.close()
 
     # write overview csv
     with open("../../outputs/overview_" + game.value + ".csv", "a", encoding="utf8", newline='') as csvfile:
