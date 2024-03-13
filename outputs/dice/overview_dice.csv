@@ -1,5 +1,5 @@
-Ground Truth;Smelly Rules;Model;Temperature;UUID;Rule Implementation
-True;;gpt-4;0;a34b28b6-1362-4010-a993-ebcf28b8d715;Rule 15 missing. Rest OK
+Ground Truth;Smelly Rules;Model;Temperature;ID;Rule Implementation
+True;;gpt-4;0;20240313233640467667;Rule 15 missing. Rest OK
 True;;gpt-4;0;b6a50411-51cf-47bb-8e86-e88c88106863;
 True;;gpt-4;0;7eb24db1-b65c-45d6-a2d7-8881b25c562;
 True;;gpt-4;0;35b5800f-224d-4374-a87e-815efc0046e9;
@@ -8,3 +8,14 @@ False;8, 9;gpt-4;0;275f2f9f-670c-496d-8e80-90b654c445aa;
 False;8, 9;gpt-4;0;1d00b246-7a24-4165-9e84-b34008239c59;
 False;8, 9;gpt-4;0;14f9420f-a7f3-4ac1-ace5-1859cc954245;
 False;8, 9;gpt-4;0;5b5cf1aa-f1f9-4c59-8fcf-f14d688fcc8d;
+True;;gpt-4;0;8881373e-134b-4eb6-a5a0-a4aa755479f7;
+True;;gpt-4;??;manual_1;seems to implement rule 15 now. Didn't test the other rules yet
+True;;gpt-4;0;20240313224814172188
+True;;gpt-4;0;20240313224930982178
+True;;gpt-4;0;20240313225329997692
+True;;gpt-4;0;20240313225622011492
+True;;gpt-4;0;20240313230146838067
+True;;gpt-3.5-turbo;0;20240313230620821597
+False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;20240313231150368809
+False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;20240313231252025033
+False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;20240313231615941267

@@ -6,7 +6,7 @@ import java.util.*;
  * commented version of:
  * a34b28b6-1362-4010-a993-ebcf28b8d715
  */
-public class DiceGame {
+public class DiceGame20240313233640467667 {
     private static final int MAX_TURNS = 12; // Rule 7
     private static final int MAX_DIFF = 10;
     private static final int MAX_POINTS = 10;
@@ -21,7 +21,7 @@ public class DiceGame {
     private int turn = 0;
 
     public static void main(String[] args) {
-        DiceGame game = new DiceGame();
+        DiceGame20240313233640467667 game = new DiceGame20240313233640467667();
         game.start();
     }
 

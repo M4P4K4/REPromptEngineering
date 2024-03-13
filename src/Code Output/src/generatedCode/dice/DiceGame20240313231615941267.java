@@ -1,0 +1,83 @@
+package generatedCode.dice;
+
+import java.util.*;
+
+public class DiceGame20240313231615941267 {
+    private static final int MAX_TURNS = 12;
+    private static final int MAX_POINTS = 10;
+    private static final String[] COLORS = {"RED", "GREEN", "BLUE", "PURPLE"};
+    private static final String[] PLAYERS = new String[3];
+    private static final int[] POINTS = new int[3];
+    private static int turn = 0;
+    private static boolean skipNextTurn = false;
+    private static boolean doubleThrow = false;
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Random random = new Random();
+
+        for (int i = 0; i < 3; i++) {
+            System.out.println("Enter name for player " + (i + 1) + ":");
+            String name = scanner.nextLine();
+            while ("Computer".equals(name)) {
+                System.out.println("Name cannot be 'Computer'. Enter another name:");
+                name = scanner.nextLine();
+            }
+            PLAYERS[i] = name;
+        }
+
+        while (turn < MAX_TURNS) {
+            for (int i = 0; i < 3; i++) {
+                if (skipNextTurn) {
+                    skipNextTurn = false;
+                    continue;
+                }
+
+                int dice = random.nextInt(6) + 1;
+                if (dice == 1 && random.nextBoolean()) {
+                    dice += random.nextInt(6) + 1;
+                }
+                if (dice == 6) {
+                    skipNextTurn = true;
+                }
+                if (doubleThrow) {
+                    dice += random.nextInt(6) + 1;
+                    doubleThrow = false;
+                }
+                if (dice % 2 == 0) {
+                    dice /= 2;
+                }
+                if (dice == 2) {
+                    dice *= 3;
+                }
+
+                POINTS[i] += dice;
+                System.out.println(PLAYERS[i] + " rolled a " + dice + ". Total points: " + POINTS[i] + ". Color: " + getColor(i));
+
+                if (POINTS[i] > MAX_POINTS) {
+                    System.out.println("Congratulations " + PLAYERS[i] + "! You have won the game!");
+                    return;
+                }
+
+                if (POINTS[0] == POINTS[1] && POINTS[1] == POINTS[2]) {
+                    System.out.println("Equality!");
+                }
+
+                turn++;
+                if (turn >= MAX_TURNS) {
+                    break;
+                }
+            }
+        }
+
+        System.out.println("Game over. No one won.");
+    }
+
+    private static String getColor(int player) {
+        if (POINTS[player] > MAX_POINTS) {
+            return COLORS[3];
+        } else {
+            return COLORS[player];
+        }
+    }
+}

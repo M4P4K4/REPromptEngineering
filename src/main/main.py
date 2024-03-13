@@ -1,6 +1,7 @@
 import csv
 import os
 import uuid
+from datetime import datetime
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -22,7 +23,7 @@ class Game(Enum):
     PONG = "pong"
 
 
-class Model(Enum):
+class GPTModel(Enum):
     GPT_3 = "gpt-3.5-turbo"
     GPT_4 = "gpt-4"
 
@@ -35,9 +36,11 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
 def main():
-    generate_code([], Game.PONG, Model.GPT_4, 0)
-    generate_code([], Game.SNAKE, Model.GPT_4, 0)
-    generate_code([], Game.SCOPA, Model.GPT_4, 0)
+    # generate_code([8,9,10,11,12,13,14,15,16], Game.DICE, GPTModel.GPT_4, 0)
+
+    unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+    create_java_code(Game.DICE, unique_id, "a34b28b6-1362-4010-a993-ebcf28b8d715")
+    print(unique_id)
 
 
 # noinspection PyTypeChecker
@@ -52,9 +55,8 @@ def create_prompt_with_csv(smells, game):
             else:
                 row_name = "Non Smelly Option 1"
             prompt += row[row_name] + " "
-        prompt.rstrip()
 
-    return prompt
+    return prompt.rstrip()
 
 
 # source from most of the code: https://github.com/googleworkspace/python-samples/blob/main/sheets/quickstart/quickstart.py
@@ -107,23 +109,16 @@ def create_prompt_with_gsheet(smells, game):
             elif row[6]:
                 row_id = 6
                 prompt += row[row_id] + " "
-        prompt.rstrip()
 
-        return prompt
+        return prompt.rstrip()
 
     except HttpError as err:
         print(err)
 
 
-def generate_code(smells, game, model, temperature):
-    output_id = str(uuid.uuid4())
-
-    # alternative idea for counting the output files
-    # with open("../../outputs/overview_" + game.value + ".csv", "r") as csvfile:
-    #     for count, line in enumerate(csvfile):
-    #         pass
-    #     output_id = count + 1
-    #     csvfile.close()
+def generate_code(smells: list[int], game: Game, model: GPTModel, temperature: int):
+    # unique_id = str(uuid.uuid4())
+    unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
     if not smells:
         smelly = False
@@ -144,11 +139,8 @@ def generate_code(smells, game, model, temperature):
         stream=True,
     )
 
-    # output_file = open("../../outputs/" + game.value + "/" + "output_" + output_id + ".txt", "x")
-    # input_file = open("../../outputs/" + game.value + "/" + "prompt_" + output_id + ".txt", "x")
-
     # write output
-    with open("../../outputs/" + game.value + "/output/output_" + output_id + ".txt", "x") as output_file:
+    with open("../../outputs/" + game.value + "/output/output_" + str(unique_id) + ".txt", "x") as output_file:
         for chunk in stream:
             content = chunk.choices[0].delta.content
             if content is not None:
@@ -156,14 +148,22 @@ def generate_code(smells, game, model, temperature):
         output_file.close()
 
     # write prompt
-    with open("../../outputs/" + game.value + "/prompt/prompt_" + output_id + ".txt", "x") as input_file:
+    with open("../../outputs/" + game.value + "/prompt/prompt_" + str(unique_id) + ".txt", "x") as input_file:
         input_file.write(given_prompt)
         input_file.close()
 
-    # write overview csv
-    with open("../../outputs/" + game.value + "/overview_" + game.value + ".csv", "a", encoding="utf8",
-              newline='') as csvfile:
-        fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "UUID"]
+    write_overview_file(game, smells, smelly, model, temperature, unique_id)
+    create_java_code(game, unique_id)
+
+
+def write_overview_file(game, smells, smelly, model, temperature, unique_id):
+    overview_filepath = "../../outputs/" + game.value + "/overview_" + game.value + ".csv"
+    if os.path.isfile(overview_filepath):
+        mode = "a"  # open existing file
+    else:
+        mode = "x"  # create new file
+    with open(overview_filepath, mode, encoding="utf8", newline='') as csvfile:
+        fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "ID"]
         writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
         smells_string = ""
 
@@ -172,12 +172,43 @@ def generate_code(smells, game, model, temperature):
             if len(smells) - 1 > idx:
                 smells_string += ", "
 
-        writer.writeheader()
+        if mode == "x":
+            writer.writeheader()  # Only for the first output generation of a game!
+
         writer.writerow({"Ground Truth": (not smelly),
                          "Smelly Rules": smells_string,
                          "Model": model.value,
                          "Temperature": temperature,
-                         "UUID": output_id})
+                         "ID": unique_id})
+
+
+def create_java_code(game: Game, unique_id: int, old_uuid=None):
+    if not old_uuid:
+        old_uuid = unique_id
+    # old_uuid = kwargs.get("old_uuid", unique_id)#
+
+    code = "package generatedCode." + game.value + ";\n\n"
+
+    # read code
+    with open("../../outputs/" + game.value + "/output/output_" + str(old_uuid) + ".txt") as f:
+        output = f.readlines()
+        is_code = False
+        for line in output:
+            if line.startswith("```") and not is_code:
+                is_code = True
+            elif line.startswith("```") and is_code:
+                break
+            elif is_code:
+                if game == Game.DICE:
+                    code += line.replace("DiceGame", "DiceGame" + str(unique_id))
+                else:
+                    code += line
+        f.close()
+
+    # write code
+    with open("../../src/Code Output/src/generatedCode/" + game.value + "/DiceGame" + str(unique_id) + ".java", "x") as f:
+        f.write(code)
+        f.close()
 
 
 if __name__ == '__main__':
