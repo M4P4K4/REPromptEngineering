@@ -9,7 +9,7 @@ False;8, 9;gpt-4;0;1d00b246-7a24-4165-9e84-b34008239c59;;;;;;;;;;;;;;;;;
 False;8, 9;gpt-4;0;14f9420f-a7f3-4ac1-ace5-1859cc954245;;;;;;;;;;;;;;;;;
 False;8, 9;gpt-4;0;5b5cf1aa-f1f9-4c59-8fcf-f14d688fcc8d;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;8881373e-134b-4eb6-a5a0-a4aa755479f7;;;;;;;;;;;;;;;;;
-True;;gpt-4;??;manual_1;only tested rule 15;;;;;;;;;;;;;;;True;
+True;;gpt-4;??;manual_1;only tested rule 15. Generated via chat.openai.com;;;;;;;;;;;;;;;True;
 True;;gpt-4;0;152ad5f9-f1c8-40e7-b0dc-147b246111a3;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;78e34c4c-5ed2-4ba6-af00-d8232e53ac26;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;7efc59e8-2b96-4f05-ae52-bc7ad97a3bae;;;;;;;;;;;;;;;;;
