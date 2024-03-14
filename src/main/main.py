@@ -35,13 +35,14 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
 def main():
-    smells = [8, 9, 10, 11, 12, 13, 14, 15, 16]
-    generate_code(smells, Game.DICE, GPTModel.GPT_4, 0)
+    # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16]
+    smells = []
+    # generate_code(smells, Game.SCOPA, GPTModel.GPT_4, 0)
 
     # unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
     # unique_id = uuid.uuid4()
-    # unique_id = "manual_1"
-    # create_java_code(Game.DICE, unique_id)
+    unique_id = "4952c293_3342_427d_970c_9b13751e0eb7"
+    create_java_code(Game.SCOPA, unique_id)
     # print(unique_id)
 
 
@@ -194,6 +195,9 @@ def create_java_code(game: Game, unique_id: uuid, old_uuid=None):
     if game == Game.DICE:
         old_name = "DiceGame"
         new_name = "DiceGame_" + str(unique_id)
+    elif game == Game.SCOPA:
+        old_name = "Main"
+        new_name = "Scopa_" + str(unique_id)
     else:
         old_name = "TEST"
         new_name = "TEST_"
