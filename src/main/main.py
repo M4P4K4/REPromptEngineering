@@ -1,7 +1,6 @@
 import csv
 import os
 import uuid
-from datetime import datetime
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -36,11 +35,14 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
 def main():
-    # generate_code([8,9,10,11,12,13,14,15,16], Game.DICE, GPTModel.GPT_4, 0)
+    smells = [8, 9, 10, 11, 12, 13, 14, 15, 16]
+    generate_code(smells, Game.DICE, GPTModel.GPT_4, 0)
 
-    unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
-    create_java_code(Game.DICE, unique_id, "a34b28b6-1362-4010-a993-ebcf28b8d715")
-    print(unique_id)
+    # unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+    # unique_id = uuid.uuid4()
+    # unique_id = "manual_1"
+    # create_java_code(Game.DICE, unique_id)
+    # print(unique_id)
 
 
 # noinspection PyTypeChecker
@@ -117,8 +119,8 @@ def create_prompt_with_gsheet(smells, game):
 
 
 def generate_code(smells: list[int], game: Game, model: GPTModel, temperature: int):
-    # unique_id = str(uuid.uuid4())
-    unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
+    unique_id = str(uuid.uuid4()).replace("-", "_")
+    # unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
     if not smells:
         smelly = False
@@ -163,7 +165,9 @@ def write_overview_file(game, smells, smelly, model, temperature, unique_id):
     else:
         mode = "x"  # create new file
     with open(overview_filepath, mode, encoding="utf8", newline='') as csvfile:
-        fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "ID"]
+        fieldnames = ["Ground Truth", "Smelly Rules", "Model", "Temperature", "UUID", "Additional Infos",
+                      "Rule 1", "Rule 2", "Rule 3", "Rule 4", "Rule 5", "Rule 6", "Rule 7", "Rule 8", "Rule 9",
+                      "Rule 10", "Rule 11", "Rule 12", "Rule 13", "Rule 14", "Rule 15", "Rule 16", "Rule 17"]
         writer = csv.DictWriter(csvfile, delimiter=";", fieldnames=fieldnames)
         smells_string = ""
 
@@ -179,13 +183,20 @@ def write_overview_file(game, smells, smelly, model, temperature, unique_id):
                          "Smelly Rules": smells_string,
                          "Model": model.value,
                          "Temperature": temperature,
-                         "ID": unique_id})
+                         "UUID": unique_id})
 
 
-def create_java_code(game: Game, unique_id: int, old_uuid=None):
+def create_java_code(game: Game, unique_id: uuid, old_uuid=None):
     if not old_uuid:
         old_uuid = unique_id
-    # old_uuid = kwargs.get("old_uuid", unique_id)#
+    unique_id = unique_id.replace("-", "_")
+
+    if game == Game.DICE:
+        old_name = "DiceGame"
+        new_name = "DiceGame_" + str(unique_id)
+    else:
+        old_name = "TEST"
+        new_name = "TEST_"
 
     code = "package generatedCode." + game.value + ";\n\n"
 
@@ -199,14 +210,11 @@ def create_java_code(game: Game, unique_id: int, old_uuid=None):
             elif line.startswith("```") and is_code:
                 break
             elif is_code:
-                if game == Game.DICE:
-                    code += line.replace("DiceGame", "DiceGame" + str(unique_id))
-                else:
-                    code += line
+                code += line.replace(old_name, new_name)
         f.close()
 
     # write code
-    with open("../../src/Code Output/src/generatedCode/" + game.value + "/DiceGame" + str(unique_id) + ".java", "x") as f:
+    with open("../../src/Code Output/src/generatedCode/" + game.value + "/" + new_name + ".java", "x") as f:
         f.write(code)
         f.close()
 

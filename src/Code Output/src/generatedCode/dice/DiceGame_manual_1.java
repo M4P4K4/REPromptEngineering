@@ -1,0 +1,108 @@
+package generatedCode.dice;
+
+import java.util.*;
+
+/**
+ * comment = original generated
+ * got manually modified for testing
+ */
+public class DiceGame_manual_1 {
+    private static final Random random = new Random();
+    private static final Scanner scanner = new Scanner(System.in);
+
+    static class Player {
+        String name;
+        int points = 0;
+        String color = "red";
+
+        Player(String name, String color) {
+            this.name = name;
+            this.color = color;
+        }
+
+        void updateColor() {
+            if (this.points > 10) {
+                this.color = "purple";
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Welcome to the Dice Game!");
+        boolean rerollOnOne = decideRerollRule();
+
+        Player[] players = new Player[3];
+        String[] colors = {"red", "green", "blue"};
+        for (int i = 0; i < 3; i++) {
+            System.out.print("Enter name for Player " + (i + 1) + " (cannot be 'Computer'): ");
+            String name;
+            while (true) {
+                name = scanner.nextLine();
+                if (!name.equalsIgnoreCase("Computer")) break;
+                System.out.println("Name cannot be Computer. Please enter a different name:");
+            }
+            players[i] = new Player(name, colors[i]);
+        }
+
+        List<Player> playerOrder = Arrays.asList(players);
+        Collections.shuffle(playerOrder);
+
+        int turnCount = 0;
+        while (turnCount < 12) {
+            for (Player player : playerOrder) {
+                int dice = throwDice();
+                if (rerollOnOne && dice == 1) {
+                    System.out.println(player.name + " rolled a 1 and gets to reroll!");
+                    dice = throwDice();
+                }
+
+                if (dice == 2) dice *= 3;
+                else if (dice == 6) turnCount++; // Skip next player's turn by increasing turn count prematurely
+                else if (dice % 2 == 0) dice /= 2;
+
+                player.points += dice;
+                player.updateColor();
+                System.out.println(player.name + " (" + player.color + ") rolled a " + dice + ". Total points: " + player.points);
+
+                if (checkForWin(playerOrder, player)) {
+                    System.out.println("Congratulations " + player.name + " you won the game! You are the best!");
+                    return;
+                }
+
+                checkForEquality(playerOrder);
+                turnCount++;
+                if (turnCount >= 12) break;
+            }
+        }
+        System.out.println("Game over. The maximum turns have been reached.");
+    }
+
+    private static boolean decideRerollRule() {
+        System.out.print("Should the game allow a reroll on dice count 1? (yes/no): ");
+        String input = scanner.nextLine();
+        return input.trim().equalsIgnoreCase("yes");
+    }
+
+    private static int throwDice() {
+        return random.nextInt(6) + 1;
+    }
+
+//    private static boolean checkForWin(Player[] players, Player currentPlayer) {
+    private static boolean checkForWin(List<Player> players, Player currentPlayer) {
+        for (Player player : players) {
+            if (player != currentPlayer && currentPlayer.points <= player.points + 10) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+//    private static void checkForEquality(Player[] players) {
+    private static void checkForEquality(List<Player> players) {
+//        boolean isEqual = players[0].points == players[1].points && players[1].points == players[2].points;
+        boolean isEqual = players.get(0).points == players.get(1).points && players.get(1).points == players.get(2).points;
+        if (isEqual) {
+            System.out.println("Equality!");
+        }
+    }
+}

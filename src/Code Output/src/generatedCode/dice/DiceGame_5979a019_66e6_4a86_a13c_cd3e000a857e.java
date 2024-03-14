@@ -2,7 +2,7 @@ package generatedCode.dice;
 
 import java.util.Random;
 
-public class DiceGame20240313231252025033 {
+public class DiceGame_5979a019_66e6_4a86_a13c_cd3e000a857e {
     private int[] scores = new int[3];
     private int[] turns = new int[3];
     private boolean skipNextTurn = false;
@@ -57,6 +57,6 @@ public class DiceGame20240313231252025033 {
     }
 
     public static void main(String[] args) {
-        new DiceGame20240313231252025033().play();
+        new DiceGame_5979a019_66e6_4a86_a13c_cd3e000a857e().play();
     }
 }
