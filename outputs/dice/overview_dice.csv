@@ -14,7 +14,7 @@ True;;gpt-4;0;152ad5f9-f1c8-40e7-b0dc-147b246111a3;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;78e34c4c-5ed2-4ba6-af00-d8232e53ac26;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;7efc59e8-2b96-4f05-ae52-bc7ad97a3bae;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;4750d1ca-719e-4eca-82c0-4e5fdd5943a3;;;;;;;;;;;;;;;;;
-True;;gpt-4;0;579cda5e-8eb8-4526-a71d-a812d8ea8bf3;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;579cda5e-8eb8-4526-a71d-a812d8ea8bf3;tested;True;True;True;True;True;True;True;True (?);incomplete: player can't decide;True;True;wrong: skips all players of this round;True;True;True;True
 True;;gpt-3.5-turbo;0;580bbe26-0e48-4377-bd1f-3e73e2bfa980;no review, old model;-;-;-;-;-;-;-;-;-;-;-;-;-;-;-;-
 False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;de2a5a41-25df-4f72-869a-4cdd98a39d7e;;;;;;;;;;;;;;;;;
 False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;5979a019-66e6-4a86-a13c-cd3e000a857e;;;;;;;;;;;;;;;;;

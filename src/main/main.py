@@ -34,16 +34,16 @@ ORG_KEY = os.getenv("ORG_KEY")
 client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 
+# list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16]
     smells = []
     # generate_code(smells, Game.SCOPA, GPTModel.GPT_4, 0)
 
-    # unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
     # unique_id = uuid.uuid4()
-    unique_id = "4952c293_3342_427d_970c_9b13751e0eb7"
-    create_java_code(Game.SCOPA, unique_id)
-    # print(unique_id)
+    # create_java_code(Game.SCOPA, unique_id)
+
+    print(create_prompt_with_gsheet([], Game.DICE))
 
 
 # noinspection PyTypeChecker
@@ -104,14 +104,16 @@ def create_prompt_with_gsheet(smells, game):
             return
 
         # create the prompt from results
-        prompt = "Create java code for the following description of a game: "
+        prompt = "Create java code for the following description of a game:\n"
         for row in values:
+            prompt += row[0] + ". "
             if int(row[0]) in smells and row[5]:
                 row_id = 5
                 prompt += row[row_id] + " "
             elif row[6]:
                 row_id = 6
                 prompt += row[row_id] + " "
+            prompt += "\n"
 
         return prompt.rstrip()
 
