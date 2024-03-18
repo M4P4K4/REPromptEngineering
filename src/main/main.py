@@ -36,14 +36,13 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
-    # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16]
-    smells = []
-    # generate_code(smells, Game.SCOPA, GPTModel.GPT_4, 0)
+    # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
+    generate_code([], Game.SCOPA, GPTModel.GPT_4, 0)
 
     # unique_id = uuid.uuid4()
     # create_java_code(Game.SCOPA, unique_id)
 
-    print(create_prompt_with_gsheet([], Game.DICE))
+    # print(create_prompt_with_gsheet([], Game.SCOPA))
 
 
 # noinspection PyTypeChecker
@@ -137,6 +136,7 @@ def generate_code(smells: list[int], game: Game, model: GPTModel, temperature: i
     stream = client.chat.completions.create(
         model=model.value,
         temperature=temperature,
+        # max_tokens=7400,
         messages=[{
             "role": "user",
             "content": given_prompt
