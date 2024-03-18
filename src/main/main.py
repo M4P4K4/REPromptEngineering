@@ -23,7 +23,7 @@ class Game(Enum):
 
 
 class GPTModel(Enum):
-    GPT_3 = "gpt-3.5-turbo"
+    GPT_3 = "gpt-3.5-turbo-16k"
     GPT_4 = "gpt-4"
 
 
@@ -37,7 +37,7 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
-    generate_code([], Game.SCOPA, GPTModel.GPT_4, 0)
+    generate_code([], Game.SCOPA, GPTModel.GPT_3, 0)
 
     # unique_id = uuid.uuid4()
     # create_java_code(Game.SCOPA, unique_id)
@@ -136,7 +136,7 @@ def generate_code(smells: list[int], game: Game, model: GPTModel, temperature: i
     stream = client.chat.completions.create(
         model=model.value,
         temperature=temperature,
-        # max_tokens=7400,
+        max_tokens=12000,
         messages=[{
             "role": "user",
             "content": given_prompt
@@ -198,8 +198,8 @@ def create_java_code(game: Game, unique_id: uuid, old_uuid=None):
         old_name = "DiceGame"
         new_name = "DiceGame_" + str(unique_id)
     elif game == Game.SCOPA:
-        old_name = "Main"
-        new_name = "Scopa_" + str(unique_id)
+        old_name = "ScopaGame"
+        new_name = "ScopaGame_" + str(unique_id)
     else:
         old_name = "TEST"
         new_name = "TEST_"
