@@ -7,11 +7,9 @@ from dotenv import load_dotenv
 from pathlib import Path
 from enum import Enum
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+from openai.types.chat import ChatCompletion
+
+from read_gsheet import GSheetReader
 
 
 class Game(Enum):
@@ -37,132 +35,88 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
-    generate_code([], Game.SCOPA, GPTModel.GPT_3, 0)
+    task1_generate_code([], Game.SCOPA, GPTModel.GPT_4, max_tokens=3300)
 
-    # unique_id = uuid.uuid4()
-    # create_java_code(Game.SCOPA, unique_id)
-
-    # print(create_prompt_with_gsheet([], Game.SCOPA))
+    # task2_trace_requirements(Game.DICE, "", GPTModel.GPT_4)
 
 
-# noinspection PyTypeChecker
-def create_prompt_with_csv(smells, game):
-    prompt = "Create java code for the following description of a game: "
-
-    with open("../../cases/" + game.value + ".csv", encoding="utf8") as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=";")
-        for row in reader:
-            if int(row["Rule ID"]) in smells and row["Smelly Rule"]:
-                row_name = "Smelly Rule"
-            else:
-                row_name = "Non Smelly Option 1"
-            prompt += row[row_name] + " "
-
-    return prompt.rstrip()
-
-
-# source from most of the code: https://github.com/googleworkspace/python-samples/blob/main/sheets/quickstart/quickstart.py
-def create_prompt_with_gsheet(smells, game):
-    # If modifying these scopes, delete the file token.json.
-    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-    gsheet_id = os.getenv("GSHEET_ID")
-    gsheet_range = game.value.title() + "!A2:I"
-
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is created automatically on the first time.
-    if os.path.exists("../../token.json"):
-        creds = Credentials.from_authorized_user_file("../../token.json", scopes)
-
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "../../credentials.json", scopes
-            )
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open("../../token.json", "w") as token:
-            token.write(creds.to_json())
-
-    try:
-        service = build("sheets", "v4", credentials=creds)
-
-        # Call the Sheets API
-        sheet = service.spreadsheets()
-        result = (
-            sheet.values()
-            .get(spreadsheetId=gsheet_id, range=gsheet_range)
-            .execute()
-        )
-        values = result.get("values", [])
-
-        if not values:
-            print("No data found.")
-            return
-
-        # create the prompt from results
-        prompt = "Create java code for the following description of a game:\n"
-        for row in values:
-            prompt += row[0] + ". "
-            if int(row[0]) in smells and row[5]:
-                row_id = 5
-                prompt += row[row_id] + " "
-            elif row[6]:
-                row_id = 6
-                prompt += row[row_id] + " "
-            prompt += "\n"
-
-        return prompt.rstrip()
-
-    except HttpError as err:
-        print(err)
-
-
-def generate_code(smells: list[int], game: Game, model: GPTModel, temperature: int):
+def task1_generate_code(smells: list[int], game: Game, model: GPTModel, temperature=0, max_tokens=None):
     unique_id = str(uuid.uuid4()).replace("-", "_")
-    # unique_id = int(datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
+    given_prompt = create_prompt_task1(smells, game)
+    output = prompt_in_chatgpt(given_prompt, model, temperature, max_tokens)
+
+    write_output_and_prompt_file(game, unique_id, given_prompt, output)
+    write_overview_file(game, smells, model, temperature, unique_id)
+    create_java_code(game, unique_id, output.choices[0].message.content.split("\n"))
+
+
+def write_output_and_prompt_file(game: Game, uid: str, prompt: str, output: ChatCompletion, task_nr=1, smells=None):
     if not smells:
-        smelly = False
-    else:
-        smelly = True
+        smells = []
 
-    # given_prompt = create_prompt_with_csv(smells, game)
-    given_prompt = create_prompt_with_gsheet(smells, game)
+    sub_dir = "../../outputs_task" + str(task_nr) + "/" + game.value
+    # write output
+    with open(sub_dir + "/output/output_" + uid + ".txt", "x") as f:
+        f.write(str(output))
+        f.close()
 
-    # send input
-    stream = client.chat.completions.create(
+    # write prompt
+    with open(sub_dir + "/prompt/prompt_" + uid + ".txt", "x") as f:
+        f.write(prompt)
+        f.close()
+
+    if task_nr == 2:
+        # write csv
+        with open(sub_dir + "/csv/csv_" + uid + ".csv", "x") as f:
+            content = output.choices[0].message.content.split("\n")
+            header = True
+            for line in content:
+                if header:
+                    f.write(line + ",'Was the Rule smellfree?','Expected Line'")
+                    header = False
+                else:
+                    parts = line.split(",")
+                    if int(parts[0].replace("'", "").replace('"', '')) in smells:
+                        f.write(line + ",'No',")
+                    else:
+                        f.write(line + ",'Yes',")
+                f.write("\n")
+            f.close()
+
+
+def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
+    return client.chat.completions.create(
         model=model.value,
         temperature=temperature,
-        max_tokens=12000,
+        max_tokens=max_tokens,
         messages=[{
             "role": "user",
             "content": given_prompt
         }],
-        stream=True,
     )
 
-    # write output
-    with open("../../outputs/" + game.value + "/output/output_" + str(unique_id) + ".txt", "x") as output_file:
-        for chunk in stream:
-            content = chunk.choices[0].delta.content
-            if content is not None:
-                output_file.write(content)
-        output_file.close()
 
-    # write prompt
-    with open("../../outputs/" + game.value + "/prompt/prompt_" + str(unique_id) + ".txt", "x") as input_file:
-        input_file.write(given_prompt)
-        input_file.close()
+def create_prompt_task1(smells, game, only_requirements=False):
 
-    write_overview_file(game, smells, smelly, model, temperature, unique_id)
-    create_java_code(game, unique_id)
+    gsheet_reader = GSheetReader(game)
+    values = gsheet_reader.values
+
+    # create the prompt from results
+    prompt = ""
+    if not only_requirements:
+        prompt += "Create java code for the following description of a game:\n"
+    for row in values:
+        prompt += row[0] + ". "
+        if int(row[0]) in smells and row[5]:
+            prompt += row[5] + " \n"
+        elif row[6]:
+            prompt += row[6] + " \n"
+    return prompt.rstrip()
 
 
-def write_overview_file(game, smells, smelly, model, temperature, unique_id):
-    overview_filepath = "../../outputs/" + game.value + "/overview_" + game.value + ".csv"
+def write_overview_file(game, smells, model, temperature, unique_id):
+    overview_filepath = "../../outputs_task1/" + game.value + "/overview_" + game.value + ".csv"
     if os.path.isfile(overview_filepath):
         mode = "a"  # open existing file
     else:
@@ -182,16 +136,15 @@ def write_overview_file(game, smells, smelly, model, temperature, unique_id):
         if mode == "x":
             writer.writeheader()  # Only for the first output generation of a game!
 
-        writer.writerow({"Ground Truth": (not smelly),
+        writer.writerow({"Ground Truth": (True if smells else False),
                          "Smelly Rules": smells_string,
                          "Model": model.value,
                          "Temperature": temperature,
                          "UUID": unique_id})
+        csvfile.close()
 
 
-def create_java_code(game: Game, unique_id: uuid, old_uuid=None):
-    if not old_uuid:
-        old_uuid = unique_id
+def create_java_code(game: Game, unique_id: uuid, output: list[str]):
     unique_id = unique_id.replace("-", "_")
 
     if game == Game.DICE:
@@ -206,23 +159,64 @@ def create_java_code(game: Game, unique_id: uuid, old_uuid=None):
 
     code = "package generatedCode." + game.value + ";\n\n"
 
-    # read code
-    with open("../../outputs/" + game.value + "/output/output_" + str(old_uuid) + ".txt") as f:
-        output = f.readlines()
-        is_code = False
-        for line in output:
-            if line.startswith("```") and not is_code:
-                is_code = True
-            elif line.startswith("```") and is_code:
-                break
-            elif is_code:
-                code += line.replace(old_name, new_name)
-        f.close()
+    is_code = False
+    for line in output:
+        if line.startswith("```") and not is_code:
+            is_code = True
+        elif line.startswith("```") and is_code:
+            break
+        elif is_code:
+            code += line.replace(old_name, new_name) + "\n"
 
     # write code
     with open("../../src/Code Output/src/generatedCode/" + game.value + "/" + new_name + ".java", "x") as f:
         f.write(code)
         f.close()
+
+
+def task2_trace_requirements(game: Game, uid: str, model: GPTModel, temperature=0):
+    smells = get_smells(uid, game)
+    prompt = create_prompt_task2(game, uid, smells)
+    output = prompt_in_chatgpt(prompt, model, temperature)
+
+    write_output_and_prompt_file(game, uid, prompt, output, 2, smells)
+
+
+def create_prompt_task2(game: Game, uid: str, smells: list[int]):
+    code = ""
+    game_name = "DiceGame_" + str(uid)
+    with open("../../src/Code Output/src/generatedCode/" + game.value + "/" + game_name + ".java") as codefile:
+        idx = 1
+        for line in codefile:
+            line = line.split("//")  # removes every comment
+            code += str(idx) + ". " + line[0]
+            if len(line) > 1:
+                code += "\n"
+            idx += 1
+        codefile.close()
+
+    requirements = create_prompt_task1(smells, game, True)
+
+    prompt = "Look at the following requirements and the code provided below. Write a CSV file with the following columns: 'Rule ID', 'Is it implemented?', 'Lines of implementation in source code' where the last column should be left empty if not correctly implemented.\n"
+    prompt += "The code is:\n"
+    prompt += code
+    prompt += "The requirements are:\n"
+    prompt += requirements
+    return prompt
+
+
+def get_smells(uid, game: Game):
+    overview_filepath = "../../outputs_task1/" + game.value + "/overview_" + game.value + ".csv"
+    smells = []
+    with open(overview_filepath) as csvfile:
+        for line in csvfile:
+            line = line.split(";")
+            if uid in line[4] and line[1]:
+                smells = line[1].split(",")
+                break
+        smells = [int(s.rstrip()) for s in smells]
+
+    return smells
 
 
 if __name__ == '__main__':
