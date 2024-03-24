@@ -1,8 +1,8 @@
-package generatedCode;
+package generatedCode.dice;
 
 import java.util.*;
 
-public class DiceGame {
+public class DiceGame_Ground_Truth_1 {
     private static final int MAX_TURNS = 12; // Rule 7
     private static final int MAX_POINTS_DIFFERENCE = 10;
     private static final int MAX_POINTS_COLOR_CHANGE = 10;

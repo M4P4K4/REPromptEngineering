@@ -18,4 +18,10 @@ True;;gpt-4;0;579cda5e-8eb8-4526-a71d-a812d8ea8bf3;tested;True;True;True;True;Tr
 True;;gpt-3.5-turbo;0;580bbe26-0e48-4377-bd1f-3e73e2bfa980;no review, old model;-;-;-;-;-;-;-;-;-;-;-;-;-;-;-;-
 False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;de2a5a41-25df-4f72-869a-4cdd98a39d7e;;;;;;;;;;;;;;;;;
 False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;5979a019-66e6-4a86-a13c-cd3e000a857e;;;;;;;;;;;;;;;;;
-False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;05eef439-692f-460b-b2af-71edee1ceb8c;tested;True;True;True;True;True;True;True;wrong: player wins if he gets 10 points;incomplete: computer decides if dice is thrown again;True;True;only first statement gets implemented;both statements implemented;True;missing;True
+False;8, 9, 10, 11, 12, 13, 14, 15, 16;gpt-4;0;05eef439_692f_460b_b2af_71edee1ceb8c;tested;True;True;True;True;True;True;True;wrong: player wins if he gets 10 points;incomplete: computer decides if dice is thrown again;True;True;only first statement gets implemented;both statements implemented;True;missing;TrueTrue;;gpt-4;0;f3c9ba66_d11a_4bac_b17d_2472365a03a8;;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;65d1313c_8e00_4284_ab08_601079f82b04;No Code!;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;d7518123_0805_4521_867c_8ae379edfdf9;No Code!;;;;;;;;;;;;;;;;;
+False;;gpt-3.5-turbo-16k;0;aa2a88ab_1b16_415c_97b5_03a119189b80;;;;;;;;;;;;;;;;;;
+False;;gpt-3.5-turbo-16k;0;57c749c1_5f62_430a_a038_47873707afaf;;;;;;;;;;;;;;;;;;
+False;;gpt-3.5-turbo-16k;0;0f87cc71_49c5_45ee_ab8e_03c3cee454a6;;;;;;;;;;;;;;;;;;
+True;;-;-;Ground_Truth_1;Ground Truth;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
