@@ -98,7 +98,6 @@ def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
 
 
 def create_prompt_task1(smells, game, only_requirements=False):
-
     gsheet_reader = GSheetReader(game)
     values = gsheet_reader.values
 
@@ -149,13 +148,11 @@ def create_java_code(game: Game, unique_id: uuid, output: list[str]):
 
     if game == Game.DICE:
         old_name = "DiceGame"
-        new_name = "DiceGame_" + str(unique_id)
     elif game == Game.SCOPA:
         old_name = "ScopaGame"
-        new_name = "ScopaGame_" + str(unique_id)
     else:
         old_name = "TEST"
-        new_name = "TEST_"
+    new_name = old_name + "_" + str(unique_id)
 
     code = "package generatedCode." + game.value + ";\n\n"
 
