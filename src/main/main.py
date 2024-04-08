@@ -35,7 +35,10 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
-    task1_generate_code([], Game.SCOPA, GPTModel.GPT_4, max_tokens=3300)
+    # task1_generate_code([], Game.SCOPA, GPTModel.GPT_4, max_tokens=3300)
+    task1_generate_code([], Game.SCOPA, GPTModel.GPT_4)
+
+    # print(create_prompt_task1([], Game.SCOPA))
 
     # task2_trace_requirements(Game.DICE, "", GPTModel.GPT_4)
 
@@ -104,13 +107,13 @@ def create_prompt_task1(smells, game, only_requirements=False):
     # create the prompt from results
     prompt = ""
     if not only_requirements:
-        prompt += "Create java code for the following description of a game:\n"
+        prompt += "Create java code for the following description of a game:"
     for row in values:
-        prompt += row[0] + ". "
+        prompt += " \n" + row[0] + ". "
         if int(row[0]) in smells and row[5]:
-            prompt += row[5] + " \n"
+            prompt += row[5]
         elif row[6]:
-            prompt += row[6] + " \n"
+            prompt += row[6]
     return prompt.rstrip()
 
 
@@ -135,7 +138,7 @@ def write_overview_file(game, smells, model, temperature, unique_id):
         if mode == "x":
             writer.writeheader()  # Only for the first output generation of a game!
 
-        writer.writerow({"Ground Truth": (True if smells else False),
+        writer.writerow({"Ground Truth": (False if smells else True),
                          "Smelly Rules": smells_string,
                          "Model": model.value,
                          "Temperature": temperature,
@@ -169,6 +172,8 @@ def create_java_code(game: Game, unique_id: uuid, output: list[str]):
     with open("../../src/Code Output/src/generatedCode/" + game.value + "/" + new_name + ".java", "x") as f:
         f.write(code)
         f.close()
+
+    print(code)
 
 
 def task2_trace_requirements(game: Game, uid: str, model: GPTModel, temperature=0):
