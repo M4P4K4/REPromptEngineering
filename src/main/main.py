@@ -36,9 +36,9 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
     # task1_generate_code([], Game.SCOPA, GPTModel.GPT_4, max_tokens=3300)
-    task1_generate_code([], Game.SCOPA, GPTModel.GPT_4)
+    # task1_generate_code([], Game.SNAKE, GPTModel.GPT_4)
 
-    # print(create_prompt_task1([], Game.SCOPA))
+    print(create_prompt_task1([], Game.SNAKE))
 
     # task2_trace_requirements(Game.DICE, "", GPTModel.GPT_4)
 
@@ -47,11 +47,12 @@ def task1_generate_code(smells: list[int], game: Game, model: GPTModel, temperat
     unique_id = str(uuid.uuid4()).replace("-", "_")
 
     given_prompt = create_prompt_task1(smells, game)
+    # given_prompt = create_prompt_txtfile()
     output = prompt_in_chatgpt(given_prompt, model, temperature, max_tokens)
 
     write_output_and_prompt_file(game, unique_id, given_prompt, output)
     write_overview_file(game, smells, model, temperature, unique_id)
-    create_java_code(game, unique_id, output.choices[0].message.content.split("\n"))
+    create_code(game, unique_id, output.choices[0].message.content.split("\n"))
 
 
 def write_output_and_prompt_file(game: Game, uid: str, prompt: str, output: ChatCompletion, task_nr=1, smells=None):
@@ -100,6 +101,14 @@ def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
     )
 
 
+def create_prompt_txtfile():
+    prompt = ""
+    with open("../../cases/manualprompt.txt") as f:
+        prompt = f.read()
+        f.close()
+    return prompt
+
+
 def create_prompt_task1(smells, game, only_requirements=False):
     gsheet_reader = GSheetReader(game)
     values = gsheet_reader.values
@@ -107,13 +116,12 @@ def create_prompt_task1(smells, game, only_requirements=False):
     # create the prompt from results
     prompt = ""
     if not only_requirements:
-        prompt += "Create java code for the following description of a game:"
+        prompt += "Create code for the following description of a game:"
     for row in values:
-        prompt += " \n" + row[0] + ". "
         if int(row[0]) in smells and row[5]:
-            prompt += row[5]
+            prompt += " \n" + row[0] + ". " + row[5]
         elif row[6]:
-            prompt += row[6]
+            prompt += " \n" + row[0] + ". " + row[6]
     return prompt.rstrip()
 
 
@@ -146,21 +154,32 @@ def write_overview_file(game, smells, model, temperature, unique_id):
         csvfile.close()
 
 
-def create_java_code(game: Game, unique_id: uuid, output: list[str]):
+def create_code(game: Game, unique_id: uuid, output: list[str]):
     unique_id = unique_id.replace("-", "_")
 
+    for line in output:
+        if line.startswith("```"):
+            if line.startswith("```python"):
+                create_python_code(game, unique_id, output)
+            elif line.startswith("```java"):
+                create_java_code(game, unique_id, output)
+            break
+
+
+def create_java_code(game: Game, unique_id: uuid, output: list[str]):
     if game == Game.DICE:
         old_name = "DiceGame"
     elif game == Game.SCOPA:
         old_name = "ScopaGame"
     else:
-        old_name = "TEST"
+        old_name = "Game"
     new_name = old_name + "_" + str(unique_id)
 
     code = "package generatedCode." + game.value + ";\n\n"
 
     is_code = False
     for line in output:
+        print(line)
         if line.startswith("```") and not is_code:
             is_code = True
         elif line.startswith("```") and is_code:
@@ -173,7 +192,24 @@ def create_java_code(game: Game, unique_id: uuid, output: list[str]):
         f.write(code)
         f.close()
 
-    print(code)
+
+def create_python_code(game: Game, unique_id: uuid, output: list[str]):
+    code = ""
+
+    is_code = False
+    for line in output:
+        print(line)
+        if line.startswith("```") and not is_code:
+            is_code = True
+        elif line.startswith("```") and is_code:
+            break
+        elif is_code:
+            code += line + "\n"
+
+    # write code
+    with open("../../src/Code Output/src/generatedCode/" + game.value + "/" + "Game_" + str(unique_id) + ".py", "x") as f:
+        f.write(code)
+        f.close()
 
 
 def task2_trace_requirements(game: Game, uid: str, model: GPTModel, temperature=0):
