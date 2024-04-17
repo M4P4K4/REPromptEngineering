@@ -1,0 +1,19 @@
+Create code for the following description of a game:
+1. The goal of the game is to complete 33 levels successfully.
+2. The board is 200 pixels wide horizontally and 300 pixels wide vertically.
+3. At each level the user moves a paddle in order to hit a ball, making it change its direction upward. To successfully complete a level the user needs to break all bricks on the board, by hitting them with the ball.
+4. The bricks and the paddle are rectangular blocks with the width of 20 pixels and height of 10 pixels. The ball has a diameter of 10 pixels.
+5. Each brick has random colour (blue, red, gold) and size.
+6. A Brick can be sized single (20 x 10 pixels) or double (40 x 10 pixels).
+7. Blue bricks can be destroyed with one hit, red bricks require two hits, gold bricks require three hits.
+8. The first level gets initialised with 50 blue, single bricks randomly placed on the upper third of the board.
+9. The paddle moves only horizontally on the bottom of the board, controlled by the user by left and right arrow keys. The paddle always stays inside the board. When each level starts the paddle resets to the center of the bottom border.
+10. At the beginning of each level, the ball starts from the top left corner of the board and moves downwards with a straight trajectory at a 45° angle and a speed of 5 pixels per second.
+11. The ball direction changes every time the ball hits the paddle or the border of the board (except for the bottom border) with the same angle of reflection as the angle of incidence.
+12. Every time a next level starts, the speed of the ball increases of 1 pixel per second.
+13. When the user finishes a level, the next level with a different brick arrangement and increased difficulty begins. Each level adds two red bricks and one gold brick.
+14. The program shall generate the brick pattern and arrangement randomly.
+15. The user has 3 lives.
+16. The user loses a life every time the ball falls off the bottom of the board.
+17. When the user loses a life but still have ones, the level restarts. Once the user loses all lives, the game is over. If the user want to play again, the game will start again from level 1. If not, the game ends.
+Assume that all graphical elements are given and can be called with a simple function.
