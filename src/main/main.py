@@ -102,7 +102,6 @@ def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
 
 
 def create_prompt_txtfile():
-    prompt = ""
     with open("../../cases/manualprompt.txt") as f:
         prompt = f.read()
         f.close()
