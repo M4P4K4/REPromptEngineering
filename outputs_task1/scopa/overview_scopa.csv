@@ -1,13 +1,14 @@
 Ground Truth;Smelly Rules;Model;Temperature;UUID;Additional Infos;Rule 1;Rule 2;Rule 3;Rule 4;Rule 5;Rule 6;Rule 7;Rule 8;Rule 9;Rule 10;Rule 11;Rule 12;Rule 13;Rule 14;Rule 15;Rule 16;Rule 17;
 True;;gpt-4;0;2cf2e4e1-42e7-45bb-92cc-e9be35e20d43;only template, not complete;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;4952c293_3342_427d_970c_9b13751e0eb7;only template, not complete;;;;;;;;;;;;;;;;;
-True;;gpt-4;0;manual_1;higher token length, seems to generate more code.;;;;;;;;;;;;;;;;;;True;;gpt-4;0;c4105db8_33e4_42c9_bd25_a47d5433b807;;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;manual_1;higher token length, seems to generate more code.;;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;c4105db8_33e4_42c9_bd25_a47d5433b807;;;;;;;;;;;;;;;;;;
 True;;gpt-3.5-turbo-16k;0;b5332bc5_eead_42d9_8fd7_dd6951920635;should be complete. Used 12000 max_token;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;6210e887_ad95_42ed_a3ac_e54c065168c5;;;;;;;;;;;;;;;;;;
 True;;gpt-3.5-turbo-16k;0;b753e227_bafc_4e23_8886_44c2bd60d78a;;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;5f58fc5e_b76a_475e_8c6d_89ec81524106;;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;1f07b680_7bb7_4b51_a9c8_70f42ccb6f9c;;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;c311dbb5_c11b_4e9b_a213_e8c4c798a22f;;;;;;;;;;;;;;;;;;
-True;;gpt-4;0;manual_2;Maximum length: 6826;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+True;;gpt-4;0;manual_2;Maximum length: 6826;;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;c7d0f361_d7d6_4596_8a84_ed7e57f154d0;simplified version;;;;;;;;;;;;;;;;;
 True;;gpt-4;0;390a2da2_8226_488a_8497_7052820c5f13;Python code;;;;;;;;;;;;;;;;;
