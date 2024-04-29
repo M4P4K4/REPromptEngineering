@@ -31,6 +31,7 @@ API_KEY = os.getenv("API_KEY")
 ORG_KEY = os.getenv("ORG_KEY")
 client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
+
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
@@ -243,52 +244,67 @@ def create_prompt_task2(game: Game, uid: str, smells: list[int]):
     return prompt
 
 
-def loc_equals(param1, param2):
-    lines1 = param1.split(",")
-    lines1.pop(0)
-    lines2 = param2.split(",")
+def compare_lines(real_data, prediction, amount_lines):
+    lines_real_data = get_all_lines(real_data)
+    lines_prediction = get_all_lines(prediction)
 
-    all_lines1 = []
-    all_lines2 = []
+    true_positives = 0
+    true_negatives = amount_lines - len(lines_prediction)
+    false_positives = len(lines_prediction)
+    false_negatives = 0
 
-    for line1 in lines1:
-        line1 = line1.replace("'", "").replace('"', '').strip()
-        if "-" in line1:
-            line_range = list(range(int(line1.split("-")[0]), int(line1.split("-")[1]) + 1))
-            print("line range:" + line_range)
-            all_lines1.extend(line_range)
+    for line in lines_real_data:
+        if line in lines_prediction:
+            true_positives += 1
+            false_positives -= 1
         else:
-            all_lines1.append(int(line1))
+            false_negatives += 1
+            true_negatives -= 1
 
-    print(all_lines1)
+    precision = true_positives / (true_positives + false_positives)
+    recall = true_positives / (true_positives + false_negatives)
 
-    pass
+    return [precision, recall]
+
+
+def get_all_lines(lines):
+    lines = lines.split(",")
+    all_lines = []
+
+    for line in lines:
+        line = line.replace("'", "").replace('"', '').strip()
+        if "-" in line:
+            all_lines.extend(list(range(int(line.split("-")[0]), int(line.split("-")[1]) + 1)))
+        else:
+            all_lines.append(int(line))
+
+    return all_lines
 
 
 def task2_analyze_tracing(game: Game, uid: str):
     fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
-    answer = ""
 
-    with open("../../cases/manualtracing.csv") as csv_file1, open("../../outputs_task2/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2:
-        reader_file1 = list(csv.DictReader(csv_file1, fieldnames=fieldnames))
-        reader_file2 = list(csv.DictReader(csv_file2, fieldnames=fieldnames))
+    with (open("../../cases/manualtracing.csv") as csv_file1,
+          open("../../outputs_task2/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2):
+        reader_file1 = list(csv.DictReader(csv_file1, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
+        reader_file2 = list(csv.DictReader(csv_file2, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
         if len(reader_file2) == len(reader_file1):
-            for num, line1 in enumerate(reader_file1):
-                answer_line = ""
-                line2 = reader_file2[num]
-                if line1[fieldnames[0]] == line2[fieldnames[0]]:
-                    answer_line = "Identical"
+            for num, actual_lines in enumerate(reader_file1):
+                if num != 0:
+                    answer_line = "Rule " + actual_lines[fieldnames[0]] + ": "
+                    predicted_lines = reader_file2[num]
+                    if actual_lines[fieldnames[0]] == predicted_lines[fieldnames[0]]:
+                        answer_line += "\tIdentical Rules |"
 
-                if line1[fieldnames[1]] == line2[fieldnames[1]]:
-                    answer_line += "|Correct"
-                else:
-                    answer_line += "|Incorrect"
+                    if actual_lines[fieldnames[1]] == predicted_lines[fieldnames[1]]:
+                        answer_line += "\tCorrect implementation prediction |"
+                    else:
+                        answer_line += "\tIncorrect implementation prediction |"
 
-                precisionRecall = loc_equals(line1[fieldnames[2]], line2[fieldnames[2]])
-                # answer_line += "|precision=" + precisionRecall[0] + "&recall=" + precisionRecall[1]
+                    precision_recall = compare_lines(actual_lines[fieldnames[2]], predicted_lines[fieldnames[2]], 87)
+                    answer_line += "\tprecision: " + str(round(precision_recall[0], 2)) + "\trecall: " + str(round(precision_recall[1], 2))
 
-                # print(line1["Rule ID"] + " " + line2["Rule ID"])
-
+                    print(answer_line)
 
 
 def get_smells(uid, game: Game):
