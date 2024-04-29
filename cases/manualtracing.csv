@@ -1,7 +1,7 @@
 'Rule ID', 'Is it implemented?', 'Lines of implementation in source code'
 '1', 'Yes', '32'
 '2', 'Yes', '23'
-'3', 'Yes', '44-45'
+'3', 'Yes', '40-41'
 '4', 'Yes', '53'
 '5', 'Yes', '62'
 '6', 'Yes', '66'
