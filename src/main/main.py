@@ -31,14 +31,15 @@ API_KEY = os.getenv("API_KEY")
 ORG_KEY = os.getenv("ORG_KEY")
 client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
-
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # smells = [8, 9, 10, 11, 12, 13, 14, 15, 16] # All smells for Dice
     # task1_generate_code([], Game.SCOPA, GPTModel.GPT_4, max_tokens=3300)
     # task1_generate_code([], Game.SNAKE, GPTModel.GPT_4)
 
-    print(create_prompt_task1([], Game.SNAKE))
+    # print(create_prompt_task1([], Game.SNAKE))
+
+    task2_analyze_tracing(Game.DICE, "test")
 
     # task2_trace_requirements(Game.DICE, "", GPTModel.GPT_4)
 
@@ -240,6 +241,54 @@ def create_prompt_task2(game: Game, uid: str, smells: list[int]):
     prompt += "The requirements are:\n"
     prompt += requirements
     return prompt
+
+
+def loc_equals(param1, param2):
+    lines1 = param1.split(",")
+    lines1.pop(0)
+    lines2 = param2.split(",")
+
+    all_lines1 = []
+    all_lines2 = []
+
+    for line1 in lines1:
+        line1 = line1.replace("'", "").replace('"', '').strip()
+        if "-" in line1:
+            line_range = list(range(int(line1.split("-")[0]), int(line1.split("-")[1]) + 1))
+            print("line range:" + line_range)
+            all_lines1.extend(line_range)
+        else:
+            all_lines1.append(int(line1))
+
+    print(all_lines1)
+
+    pass
+
+
+def task2_analyze_tracing(game: Game, uid: str):
+    fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
+    answer = ""
+
+    with open("../../cases/manualtracing.csv") as csv_file1, open("../../outputs_task2/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2:
+        reader_file1 = list(csv.DictReader(csv_file1, fieldnames=fieldnames))
+        reader_file2 = list(csv.DictReader(csv_file2, fieldnames=fieldnames))
+        if len(reader_file2) == len(reader_file1):
+            for num, line1 in enumerate(reader_file1):
+                answer_line = ""
+                line2 = reader_file2[num]
+                if line1[fieldnames[0]] == line2[fieldnames[0]]:
+                    answer_line = "Identical"
+
+                if line1[fieldnames[1]] == line2[fieldnames[1]]:
+                    answer_line += "|Correct"
+                else:
+                    answer_line += "|Incorrect"
+
+                precisionRecall = loc_equals(line1[fieldnames[2]], line2[fieldnames[2]])
+                # answer_line += "|precision=" + precisionRecall[0] + "&recall=" + precisionRecall[1]
+
+                # print(line1["Rule ID"] + " " + line2["Rule ID"])
+
 
 
 def get_smells(uid, game: Game):
