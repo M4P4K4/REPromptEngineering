@@ -18,7 +18,7 @@ class GSheetReader:
         # If modifying these scopes, delete the file token.json.
         scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
         gsheet_id = os.getenv("GSHEET_ID")
-        gsheet_range = game.value.title() + "!A2:I"
+        gsheet_range = game.value.title() + "!A2:J"
 
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is created automatically on the first time.
