@@ -22,6 +22,9 @@ class GPTModel(Enum):
     GPT_4 = "gpt-4"
 
 
+AMOUNT_LINES_IN_GROUND_TRUTH_CODE = 143
+
+
 # store your keys in "variables.env"
 load_dotenv(dotenv_path=Path("../../../REPromptEngineering/variables.env"))
 API_KEY = os.getenv("API_KEY")
@@ -31,16 +34,65 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
-    # task2_analyze_tracing(Game.DICE, "test")
-    smells = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-    print(get_all_requirements(smells, Game.DICE))
+    # Step 1: Trace Requirements
+    # smells = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+    # smells = []
+    # task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
 
-    # task2_trace_requirements(Game.DICE, "", GPTModel.GPT_4)
+    # Step 2: Analyze the tracing & evaluate Performance
+
+    csv_gt = ["groundTruthTracing_DiceGame_intersection", "groundTruthTracing_DiceGame_unification",
+              "groundTruthTracing_DiceGame_Chetan", "groundTruthTracing_DiceGame_Alessio"]
+    for csv_name in csv_gt:
+        datasets = []
+        print(csv_name)
+        datasets.append(task2_analyze_tracing(Game.DICE, "b0f6a5fe-fe52-4bba-9ea7-c1101aeff2c2", csv_name))
+        datasets.append(task2_analyze_tracing(Game.DICE, "dd830856-88e0-41e4-a28a-8374340a4db8", csv_name))
+        datasets.append(task2_analyze_tracing(Game.DICE, "35f8a7f0-bfca-4bfe-b981-fa8631f5f71e", csv_name))
+        datasets.append(task2_analyze_tracing(Game.DICE, "4d3578d7-9e7c-4707-98ab-b10be568ec3f", csv_name))
+        datasets.append(task2_analyze_tracing(Game.DICE, "d1261cf6-f3c1-47a5-9fe2-eddfdbc1cad0", csv_name))
+        evaluate_performance(datasets)
+        print("------------------------------------")
+
+
+def evaluate_performance(datasets):
+    impl_pred = dict(tp=0, tn=0, fp=0, fn=0)
+    loc_precision = 0
+    loc_recall = 0
+    len_datasets = 0
+
+    for dataset in datasets:
+        for data in dataset:
+            if data['Implemented'] is True and data['Correct predicted'] is True:
+                impl_pred.update(tp=impl_pred.get('tp')+1)
+            elif data['Implemented'] is False and data['Correct predicted'] is True:
+                impl_pred.update(tn=impl_pred.get('tn')+1)
+            elif data['Implemented'] is True and data['Correct predicted'] is False:
+                impl_pred.update(fn=impl_pred.get('fn')+1)
+            elif data['Implemented'] is False and data['Correct predicted'] is False:
+                impl_pred.update(fp=impl_pred.get('fp')+1)
+
+            if data['Implemented'] is True:
+                loc_precision += data['Precision']
+                loc_recall += data['Recall']
+
+        len_datasets += len(dataset)
+
+    loc_recall = loc_recall / len_datasets
+    loc_precision = loc_precision / len_datasets
+
+    print(impl_pred)
+    tp = impl_pred.get('tp')
+    tn = impl_pred.get('tn')
+    fp = impl_pred.get('fp')
+    fn = impl_pred.get('fn')
+    print(calculate_precision_recall(tp, tn, fp, fn))
+    print([loc_precision, loc_recall, len_datasets])
 
 
 def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatCompletion, smells=None):
     if not smells:
-        smells = []
+        smells = ''
 
     sub_dir = "../../outputs/" + game.value
     # write output
@@ -55,20 +107,13 @@ def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatComplet
 
     # write csv
     with open(sub_dir + "/csv/csv_" + uid + ".csv", "x") as f:
-        content = output.choices[0].message.content.split("\n")
-        header = True
-        for line in content:
-            if header:
-                f.write(line + ",'Was the Rule smellfree?','Expected Line'") # TODO extra Zeilen sollen hier raus
-                header = False
-            else:
-                parts = line.split(",")
-                if int(parts[0].replace("'", "").replace('"', '')) in smells:
-                    f.write(line + ",'No',")
-                else:
-                    f.write(line + ",'Yes',")
-            f.write("\n")
+        content = output.choices[0].message.content
+        f.write(content)
         f.close()
+
+    with open(sub_dir + "/overview.csv", "a") as f:
+        # f.write("'UID', 'Smelly Rules'\n")
+        f.write("'" + uid + "', '" + str(smells) + "'\n")
 
 
 def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
@@ -97,11 +142,12 @@ def get_all_requirements(smells, game):
     return prompt.rstrip()
 
 
-def task2_trace_requirements(game: Game, model: GPTModel, temperature=0, smells):
+def task2_trace_requirements(game: Game, model: GPTModel, smells, temperature=0):
     prompt = create_prompt(game, smells)
     output = prompt_in_chatgpt(prompt, model, temperature)
+    uid = str(uuid.uuid4())
 
-    write_output_to_files(game, uid, prompt, output, 2)
+    write_output_to_files(game, uid, prompt, output, smells)
 
 
 def create_prompt(game: Game, smells: list[int]):
@@ -147,10 +193,7 @@ def compare_lines(real_data, prediction, amount_lines):
             false_negatives += 1
             true_negatives -= 1
 
-    precision = true_positives / (true_positives + false_positives)
-    recall = true_positives / (true_positives + false_negatives)
-
-    return [precision, recall]
+    return calculate_precision_recall(true_positives, true_negatives, false_positives, false_negatives)
 
 
 def get_all_lines(lines):
@@ -167,33 +210,51 @@ def get_all_lines(lines):
     return all_lines
 
 
-def task2_analyze_tracing(game: Game, uid: str):
-    fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
+def calculate_precision_recall(tp, tn, fp, fn):
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
 
-    with (open("../../cases/groundTruthTracing_DiceGame.csv") as csv_file1,
-          open("../../outputs_task2/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2):
+    return [precision, recall]
+
+
+def task2_analyze_tracing(game: Game, uid: str, csv_name: str):
+    fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
+    dataset = []
+
+    with (open("../../cases/" + csv_name + ".csv") as csv_file1,
+          open("../../outputs/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2):
         reader_file1 = list(
             csv.DictReader(csv_file1, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
         reader_file2 = list(
             csv.DictReader(csv_file2, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
-        if len(reader_file2) == len(reader_file1):
+        if len(reader_file1) == len(reader_file2) or len(reader_file1) + 1 == len(reader_file2):
             for num, actual_lines in enumerate(reader_file1):
+                data = {}
                 if num != 0:
-                    answer_line = "Rule " + actual_lines[fieldnames[0]] + ": "
                     predicted_lines = reader_file2[num]
-                    if actual_lines[fieldnames[0]] == predicted_lines[fieldnames[0]]:
-                        answer_line += "\tIdentical Rules |"
+                    new_num = num
+                    while actual_lines[fieldnames[0]] != predicted_lines[fieldnames[0]]:
+                        new_num += 1
+                        predicted_lines = reader_file2[new_num]
+                    data['Rule ID'] = actual_lines[fieldnames[0]]
+
+                    if actual_lines[fieldnames[1]] == "Yes":
+                        data['Implemented'] = True
+                    else:
+                        data['Implemented'] = False
 
                     if actual_lines[fieldnames[1]] == predicted_lines[fieldnames[1]]:
-                        answer_line += "\tCorrect implementation prediction |"
+                        data['Correct predicted'] = True
                     else:
-                        answer_line += "\tIncorrect implementation prediction |"
+                        data['Correct predicted'] = False
 
-                    precision_recall = compare_lines(actual_lines[fieldnames[2]], predicted_lines[fieldnames[2]], 87)
-                    answer_line += "\tprecision: " + str(round(precision_recall[0], 2)) + "\trecall: " + str(
-                        round(precision_recall[1], 2))
+                    if actual_lines[fieldnames[1]] == "Yes" and predicted_lines[fieldnames[1]] == "Yes":
+                        precision_recall = compare_lines(actual_lines[fieldnames[2]], predicted_lines[fieldnames[2]], AMOUNT_LINES_IN_GROUND_TRUTH_CODE)
+                        data['Precision'] = precision_recall[0]
+                        data['Recall'] = precision_recall[1]
 
-                    print(answer_line)
+                    dataset.append(data)
+    return dataset
 
 
 if __name__ == '__main__':
