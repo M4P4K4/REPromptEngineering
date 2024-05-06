@@ -1,6 +1,8 @@
 import csv
 import os
 import uuid
+import numpy as np
+import matplotlib.pyplot as plot
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -40,19 +42,27 @@ def main():
     # task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
 
     # Step 2: Analyze the tracing & evaluate Performance
-
-    csv_gt = ["groundTruthTracing_DiceGame_intersection", "groundTruthTracing_DiceGame_unification",
-              "groundTruthTracing_DiceGame_Chetan", "groundTruthTracing_DiceGame_Alessio"]
+    # csv_gt = ["groundTruthTracing_DiceGame_intersection", "groundTruthTracing_DiceGame_unification",
+    #           "groundTruthTracing_DiceGame_Alessio", "groundTruthTracing_DiceGame_Chetan"]
+    csv_gt = ["groundTruthTracing_DiceGame_unification"]
     for csv_name in csv_gt:
         datasets = []
+        print("------------------------------------")
         print(csv_name)
         datasets.append(task2_analyze_tracing(Game.DICE, "b0f6a5fe-fe52-4bba-9ea7-c1101aeff2c2", csv_name))
         datasets.append(task2_analyze_tracing(Game.DICE, "dd830856-88e0-41e4-a28a-8374340a4db8", csv_name))
         datasets.append(task2_analyze_tracing(Game.DICE, "35f8a7f0-bfca-4bfe-b981-fa8631f5f71e", csv_name))
         datasets.append(task2_analyze_tracing(Game.DICE, "4d3578d7-9e7c-4707-98ab-b10be568ec3f", csv_name))
         datasets.append(task2_analyze_tracing(Game.DICE, "d1261cf6-f3c1-47a5-9fe2-eddfdbc1cad0", csv_name))
-        evaluate_performance(datasets)
-        print("------------------------------------")
+        # evaluate_performance(datasets)
+
+        values = [evaluate_performance_per_ruleid(datasets, "Precision"),
+                  evaluate_performance_per_ruleid(datasets, "Recall")]
+
+        plot.title("Results for LOC tracing of smell-free requirements (RQ1)")
+        plot.boxplot(values, labels=["Precision","Recall"], meanline=True, showfliers=True, showmeans=True)
+        plot.grid(axis="y", linestyle="--")
+        plot.show()
 
 
 def evaluate_performance(datasets):
@@ -75,19 +85,57 @@ def evaluate_performance(datasets):
             if data['Implemented'] is True:
                 loc_precision += data['Precision']
                 loc_recall += data['Recall']
+                len_datasets += 1
 
-        len_datasets += len(dataset)
+        # len_datasets += len(dataset)
 
     loc_recall = loc_recall / len_datasets
     loc_precision = loc_precision / len_datasets
 
     print(impl_pred)
-    tp = impl_pred.get('tp')
-    tn = impl_pred.get('tn')
-    fp = impl_pred.get('fp')
-    fn = impl_pred.get('fn')
-    print(calculate_precision_recall(tp, tn, fp, fn))
+    print()
+    print("Implementation Prediction: Precision/Recall")
+    print(calculate_precision_recall(impl_pred.get('tp'), impl_pred.get('tn'), impl_pred.get('fp'),  impl_pred.get('fn')))
+    print()
+    print("LOC Prediction: Precision/Recall/Amount Dataset")
     print([loc_precision, loc_recall, len_datasets])
+
+
+def evaluate_performance_per_ruleid(datasets, measurement_type):
+    d = {
+        "1": [-1, -1, -1, -1, -1],
+        "2": [-1, -1, -1, -1, -1],
+        "3": [-1, -1, -1, -1, -1],
+        "4": [-1, -1, -1, -1, -1],
+        "5": [-1, -1, -1, -1, -1],
+        "6": [-1, -1, -1, -1, -1],
+        "7": [-1, -1, -1, -1, -1],
+        "8": [-1, -1, -1, -1, -1],
+        "9": [-1, -1, -1, -1, -1],
+        "10": [-1, -1, -1, -1, -1],
+        "11": [-1, -1, -1, -1, -1],
+        "12": [-1, -1, -1, -1, -1],
+        "13": [-1, -1, -1, -1, -1],
+        "15": [-1, -1, -1, -1, -1],
+        "16": [-1, -1, -1, -1, -1],
+        "17": [-1, -1, -1, -1, -1],
+        "18": [-1, -1, -1, -1, -1],
+        "19": [-1, -1, -1, -1, -1],
+        "20": [-1, -1, -1, -1, -1],
+        "21": [-1, -1, -1, -1, -1]
+    }
+    for idx, dataset in enumerate(datasets):
+        for data in dataset:
+            if measurement_type in data:
+                d[data['Rule ID']][idx] = round(data[measurement_type], 2)
+
+    values = []
+    for key, value in d.items():
+        if value[0] != -1:
+            values = [*values, *value]
+        # print(key, value, "Average ", np.mean(value))
+
+    return values
 
 
 def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatCompletion, smells=None):
