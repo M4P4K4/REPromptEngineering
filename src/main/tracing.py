@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 import uuid
 import numpy as np
 import matplotlib.pyplot as plot
@@ -17,15 +18,16 @@ from read_gsheet import GSheetReader
 
 class Game(Enum):
     DICE = "dice"
-    SCOPA = "scopa"
+    # SCOPA = "scopa"
 
 
 class GPTModel(Enum):
-    GPT_3 = "gpt-3.5-turbo-16k"
+    # GPT_3 = "gpt-3.5-turbo-16k"
     GPT_4 = "gpt-4"
 
 
 AMOUNT_LINES_IN_GROUND_TRUTH_CODE = 143
+SUB_DIR = "../../outputs/rq1/"
 
 
 # store your keys in "variables.env"
@@ -39,43 +41,45 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 def main():
     # Step 1: Trace Requirements
     # all_smells = [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]
-    # print(random.choices(smells, k=2))
-    smells = [8]
-    # for x in range(5):
+    smells = []
+    # for x in range(4):
     #     task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
-    task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
+    # print(random.choices(smells, k=2))
 
     # Step 2: Analyze the tracing & evaluate Performance
-    # csv_gt = ["groundTruthTracing_DiceGame_intersection", "groundTruthTracing_DiceGame_unification",
-    #           "groundTruthTracing_DiceGame_Alessio", "groundTruthTracing_DiceGame_Chetan"]
+    csv_gt = ["groundTruthTracing_DiceGame_Alessio",
+              "groundTruthTracing_DiceGame_Chetan",
+              "groundTruthTracing_DiceGame_unification",
+              "groundTruthTracing_DiceGame_intersection"]
     # csv_gt = ["groundTruthTracing_DiceGame_unification"]
-    # for csv_name in csv_gt:
-    #     #     datasets = build_datasets(csv_name, smells, Game.DICE)
-    #     #     evaluate_performance(datasets)
-    #     #     build_boxplot(datasets, smells)
+    for csv_name in csv_gt:
+        datasets = build_datasets(csv_name, smells)
+        evaluate_performance(datasets)
+        # build_boxplot(datasets, smells)
 
 
 def build_boxplot(datasets, smells):
     values = [evaluate_performance_per_ruleid(datasets, "Precision"),
               evaluate_performance_per_ruleid(datasets, "Recall")]
 
-    plot.title("Smelly Rules: " + str(smells))
+    if smells:
+        plot.title("Smelly Rules: " + str(smells))
     plot.boxplot(values, labels=["Precision", "Recall"], meanline=True, showfliers=True, showmeans=True)
     plot.grid(axis="y", linestyle="--")
     plot.show()
 
 
-def build_datasets(csv_name, smells, game: Game):
+def build_datasets(csv_name, smells):
     datasets = []
     print("------------------------------------")
-    print(csv_name)
+    print(csv_name.split("_")[2].upper())
 
-    with open("../../outputs/" + game.value + "/overview.csv") as csv_file:
+    with open(SUB_DIR + "overview.csv") as csv_file:
         fn = ["UID", "Smelly Rules"]
         reader_file = list(csv.DictReader(csv_file, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
         for num, line in enumerate(reader_file):
             if line[fn[1]] == str(smells):
-                datasets.append(task2_analyze_tracing(Game.DICE, line[fn[0]], csv_name))
+                datasets.append(task2_analyze_tracing(line[fn[0]], csv_name))
 
     return datasets
 
@@ -107,13 +111,10 @@ def evaluate_performance(datasets):
     loc_recall = loc_recall / len_datasets
     loc_precision = loc_precision / len_datasets
 
-    print(impl_pred)
-    print()
-    print("Implementation Prediction: Precision/Recall")
-    print(calculate_precision_recall(impl_pred.get('tp'), impl_pred.get('tn'), impl_pred.get('fp'),  impl_pred.get('fn')))
-    print()
-    print("LOC Prediction: Precision/Recall/Amount Dataset")
-    print([loc_precision, loc_recall, len_datasets])
+    # print()
+    print("Implementation Prediction: Precision/Recall \t\t", calculate_precision_recall(impl_pred.get('tp'), impl_pred.get('tn'), impl_pred.get('fp'),  impl_pred.get('fn')))
+    # print()
+    print("LOC Prediction: Precision/Recall/Amount Dataset \t", [round(loc_precision, 2), round(loc_recall, 2), len_datasets])
 
 
 def evaluate_performance_per_ruleid(datasets, measurement_type):
@@ -153,28 +154,27 @@ def evaluate_performance_per_ruleid(datasets, measurement_type):
     return values
 
 
-def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatCompletion, smells=None):
-    if not smells:
-        smells = ''
+def write_output_to_files(uid: str, prompt: str, output: ChatCompletion, smells=None):
+    # if not smells:
+    #     smells = ''
 
-    sub_dir = "../../outputs/" + game.value
     # write output
-    with open(sub_dir + "/output/output_" + uid + ".txt", "x") as f:
+    with open(SUB_DIR + "/output/output_" + uid + ".txt", "x") as f:
         f.write(str(output))
         f.close()
 
     # write prompt
-    with open(sub_dir + "/prompt/prompt_" + uid + ".txt", "x") as f:
+    with open(SUB_DIR + "/prompt/prompt_" + uid + ".txt", "x") as f:
         f.write(prompt)
         f.close()
 
     # write csv
-    with open(sub_dir + "/csv/csv_" + uid + ".csv", "x") as f:
+    with open(SUB_DIR + "/csv/csv_" + uid + ".csv", "x") as f:
         content = clean_content(output.choices[0].message.content)
         f.write(content)
         f.close()
 
-    with open(sub_dir + "/overview.csv", "a") as f:
+    with open(SUB_DIR + "/overview.csv", "a") as f:
         # f.write("'UID', 'Smelly Rules'\n")
         f.write("'" + uid + "', '" + str(smells) + "'\n")
 
@@ -182,7 +182,20 @@ def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatComplet
 def clean_content(content):
     if not content.startswith("Rule ID") and not content.startswith("'Rule ID") and not content.startswith("\"Rule ID"):
         content = content.split("```")[1]
-    return content
+        content = re.sub("^\\s*", "", content)
+    new_content = ""
+    for idx, line in enumerate(content.split("\n")):
+        if "'" not in line and "\"" not in line:
+            line_split = line.split(",", 2)
+            line = ""
+            for i in range(len(line_split)):
+                if i != 0:
+                    line += ","
+                if line_split[i]:
+                    line += "'" + line_split[i] + "'"
+        new_content += line + "\n"
+
+    return new_content.replace("\"", "'")
 
 
 def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
@@ -219,7 +232,8 @@ def task2_trace_requirements(game: Game, model: GPTModel, smells, temperature=0)
     output = prompt_in_chatgpt(prompt, model, temperature)
     uid = str(uuid.uuid4())
 
-    write_output_to_files(game, uid, prompt, output, smells)
+    write_output_to_files(uid, prompt, output, smells)
+    print("Finished: " + uid)
 
 
 def create_prompt(game: Game, smells: list[int]):
@@ -289,16 +303,13 @@ def calculate_precision_recall(tp, tn, fp, fn):
     return [precision, recall]
 
 
-def task2_analyze_tracing(game: Game, uid: str, csv_name: str):
+def task2_analyze_tracing(uid: str, csv_gt: str):
     fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
     dataset = []
 
-    with (open("../../cases/" + csv_name + ".csv") as csv_file1,
-          open("../../outputs/" + game.value + "/csv/csv_" + uid + ".csv") as csv_file2):
-        reader_file1 = list(
-            csv.DictReader(csv_file1, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
-        reader_file2 = list(
-            csv.DictReader(csv_file2, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
+    with (open("../../cases/" + csv_gt + ".csv") as csv_reference, open(SUB_DIR + "/csv/csv_" + uid + ".csv") as csv_gpt):
+        reader_file1 = list(csv.DictReader(csv_reference, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
+        reader_file2 = list(csv.DictReader(csv_gpt, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
         if len(reader_file1) == len(reader_file2) or len(reader_file1) + 1 == len(reader_file2):
             for num, actual_lines in enumerate(reader_file1):
                 data = {}
