@@ -3,6 +3,7 @@ import os
 import uuid
 import numpy as np
 import matplotlib.pyplot as plot
+import random
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -37,32 +38,46 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # Step 1: Trace Requirements
-    # smells = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-    # smells = []
-    # task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
+    # all_smells = [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]
+    # print(random.choices(smells, k=2))
+    smells = [8]
+    # for x in range(5):
+    #     task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
+    task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
 
     # Step 2: Analyze the tracing & evaluate Performance
     # csv_gt = ["groundTruthTracing_DiceGame_intersection", "groundTruthTracing_DiceGame_unification",
     #           "groundTruthTracing_DiceGame_Alessio", "groundTruthTracing_DiceGame_Chetan"]
-    csv_gt = ["groundTruthTracing_DiceGame_unification"]
-    for csv_name in csv_gt:
-        datasets = []
-        print("------------------------------------")
-        print(csv_name)
-        datasets.append(task2_analyze_tracing(Game.DICE, "b0f6a5fe-fe52-4bba-9ea7-c1101aeff2c2", csv_name))
-        datasets.append(task2_analyze_tracing(Game.DICE, "dd830856-88e0-41e4-a28a-8374340a4db8", csv_name))
-        datasets.append(task2_analyze_tracing(Game.DICE, "35f8a7f0-bfca-4bfe-b981-fa8631f5f71e", csv_name))
-        datasets.append(task2_analyze_tracing(Game.DICE, "4d3578d7-9e7c-4707-98ab-b10be568ec3f", csv_name))
-        datasets.append(task2_analyze_tracing(Game.DICE, "d1261cf6-f3c1-47a5-9fe2-eddfdbc1cad0", csv_name))
-        # evaluate_performance(datasets)
+    # csv_gt = ["groundTruthTracing_DiceGame_unification"]
+    # for csv_name in csv_gt:
+    #     #     datasets = build_datasets(csv_name, smells, Game.DICE)
+    #     #     evaluate_performance(datasets)
+    #     #     build_boxplot(datasets, smells)
 
-        values = [evaluate_performance_per_ruleid(datasets, "Precision"),
-                  evaluate_performance_per_ruleid(datasets, "Recall")]
 
-        plot.title("Results for LOC tracing of smell-free requirements (RQ1)")
-        plot.boxplot(values, labels=["Precision","Recall"], meanline=True, showfliers=True, showmeans=True)
-        plot.grid(axis="y", linestyle="--")
-        plot.show()
+def build_boxplot(datasets, smells):
+    values = [evaluate_performance_per_ruleid(datasets, "Precision"),
+              evaluate_performance_per_ruleid(datasets, "Recall")]
+
+    plot.title("Smelly Rules: " + str(smells))
+    plot.boxplot(values, labels=["Precision", "Recall"], meanline=True, showfliers=True, showmeans=True)
+    plot.grid(axis="y", linestyle="--")
+    plot.show()
+
+
+def build_datasets(csv_name, smells, game: Game):
+    datasets = []
+    print("------------------------------------")
+    print(csv_name)
+
+    with open("../../outputs/" + game.value + "/overview.csv") as csv_file:
+        fn = ["UID", "Smelly Rules"]
+        reader_file = list(csv.DictReader(csv_file, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
+        for num, line in enumerate(reader_file):
+            if line[fn[1]] == str(smells):
+                datasets.append(task2_analyze_tracing(Game.DICE, line[fn[0]], csv_name))
+
+    return datasets
 
 
 def evaluate_performance(datasets):
@@ -155,13 +170,19 @@ def write_output_to_files(game: Game, uid: str, prompt: str, output: ChatComplet
 
     # write csv
     with open(sub_dir + "/csv/csv_" + uid + ".csv", "x") as f:
-        content = output.choices[0].message.content
+        content = clean_content(output.choices[0].message.content)
         f.write(content)
         f.close()
 
     with open(sub_dir + "/overview.csv", "a") as f:
         # f.write("'UID', 'Smelly Rules'\n")
         f.write("'" + uid + "', '" + str(smells) + "'\n")
+
+
+def clean_content(content):
+    if not content.startswith("Rule ID") and not content.startswith("'Rule ID") and not content.startswith("\"Rule ID"):
+        content = content.split("```")[1]
+    return content
 
 
 def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
@@ -183,10 +204,13 @@ def get_all_requirements(smells, game):
     # create the prompt from results
     prompt = ""
     for row in values:
+        numbering = " \n" + row[0] + ". "
         if int(row[0]) in smells and row[5]:
-            prompt += " \n" + row[0] + ". " + row[5]
+            prompt += numbering + row[5]
         elif row[7]:
-            prompt += " \n" + row[0] + ". " + row[7]
+            prompt += numbering + row[7]
+        elif int(row[0]) not in smells and not row[7]:
+            prompt += numbering + "-"
     return prompt.rstrip()
 
 
