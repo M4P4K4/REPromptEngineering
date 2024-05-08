@@ -29,7 +29,6 @@ class GPTModel(Enum):
 AMOUNT_LINES_IN_GROUND_TRUTH_CODE = 143
 SUB_DIR = "../../outputs/rq2_all_smells/"
 
-
 # store your keys in "variables.env"
 load_dotenv(dotenv_path=Path("../../../REPromptEngineering/variables.env"))
 API_KEY = os.getenv("API_KEY")
@@ -39,22 +38,33 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
-    # Step 1: Trace Requirements
     # All SMELLS: [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]
-    # smells = [8]
-    # all_smells = [[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]]
-    all_smells = [[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]]
+
+    #### RQ 1 ####
+    # all_smells = [[]]  # no smells
+
+    #### RQ 2 ####
+    # all_smells = [[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]]  # one smell
+    all_smells = [[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]]  # all smells
+
+    #### RQ 3 ####
+    # all_smells = [[8, 9, 10, 19]]  # lexic
+    # all_smells = [[11, 14, 15, 20]]  # semantic
+    # all_smells = [[16, 17, 18, 21]]  # syntax
+
+    #### Step 1: Trace Requirements ####
     # for smells in all_smells:
     #     for x in range(5):
     #         task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
     # print(random.choices(smells, k=2))
 
-    # Step 2: Analyze the tracing & evaluate Performance
+    #### Step 2: Analyze the tracing & evaluate Performance ####
     # csv_gt = ["groundTruthTracing_DiceGame_Alessio",
     #           "groundTruthTracing_DiceGame_Chetan",
     #           "groundTruthTracing_DiceGame_unification",
     #           "groundTruthTracing_DiceGame_intersection"]
-    csv_gt = ["groundTruthTracing_DiceGame_unification"]
+    csv_gt = ["csv_test_test"]
+    # csv_gt = ["groundTruthTracing_DiceGame_unification"]
     for csv_name in csv_gt:
         datasets = build_datasets(csv_name, all_smells)
         evaluate_performance(datasets)
@@ -89,7 +99,7 @@ def build_datasets(csv_name, smells):
 
 
 def evaluate_performance(datasets):
-    impl_pred = dict(tp=0, tn=0, fp=0, fn=0)
+    pred = dict(tp=0, tn=0, fp=0, fn=0)
     loc_precision = 0
     loc_recall = 0
     len_datasets = 0
@@ -97,13 +107,13 @@ def evaluate_performance(datasets):
     for dataset in datasets:
         for data in dataset:
             if data['Implemented'] is True and data['Correct predicted'] is True:
-                impl_pred.update(tp=impl_pred.get('tp')+1)
+                pred.update(tp=pred.get('tp') + 1)
             elif data['Implemented'] is False and data['Correct predicted'] is True:
-                impl_pred.update(tn=impl_pred.get('tn')+1)
+                pred.update(tn=pred.get('tn') + 1)
             elif data['Implemented'] is True and data['Correct predicted'] is False:
-                impl_pred.update(fn=impl_pred.get('fn')+1)
-            elif data['Implemented'] is False and data['Correct predicted'] is False:
-                impl_pred.update(fp=impl_pred.get('fp')+1)
+                pred.update(fn=pred.get('fn') + 1)
+            else:
+                pred.update(fp=pred.get('fp') + 1)
 
             if data['Implemented'] is True:
                 loc_precision += data['Precision']
@@ -116,9 +126,11 @@ def evaluate_performance(datasets):
     loc_precision = loc_precision / len_datasets
 
     # print()
-    print("Implementation Prediction: Precision/Recall \t\t", calculate_precision_recall(impl_pred.get('tp'), impl_pred.get('tn'), impl_pred.get('fp'),  impl_pred.get('fn')))
+    precision_recall = [round(x, 2) for x in calculate_precision_recall(pred.get('tp'), pred.get('tn'), pred.get('fp'), pred.get('fn'))]
+    print("Implementation Prediction: Precision/Recall \t\t", precision_recall)
     # print()
-    print("LOC Prediction: Precision/Recall/Amount Dataset \t", [round(loc_precision, 2), round(loc_recall, 2), len_datasets])
+    precision_recall = [round(loc_precision, 2), round(loc_recall, 2)]
+    print("LOC Prediction: Precision/Recall/Amount Dataset \t", precision_recall, len_datasets)
 
 
 def evaluate_performance_per_ruleid(datasets, measurement_type):
@@ -154,8 +166,8 @@ def evaluate_performance_per_ruleid(datasets, measurement_type):
     values = []
     for key, value in d.items():
         # if value[0] != -1:
-            values = [*values, *value]
-        # print(key, value, "Average ", np.mean(value))
+        values = [*values, *value]
+    # print(key, value, "Average ", np.mean(value))
 
     return values
 
@@ -325,9 +337,12 @@ def task2_analyze_tracing(uid: str, csv_gt: str):
     fieldnames = ['Rule ID', 'Is it implemented?', 'Lines of implementation in source code']
     dataset = []
 
-    with (open("../../cases/" + csv_gt + ".csv") as csv_reference, open(SUB_DIR + "/csv/csv_" + uid + ".csv") as csv_gpt):
-        reader_file1 = list(csv.DictReader(csv_reference, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
-        reader_file2 = list(csv.DictReader(csv_gpt, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
+    with (open("../../cases/" + csv_gt + ".csv") as csv_reference, open(
+            SUB_DIR + "/csv/csv_" + uid + ".csv") as csv_gpt):
+        reader_file1 = list(
+            csv.DictReader(csv_reference, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
+        reader_file2 = list(
+            csv.DictReader(csv_gpt, fieldnames=fieldnames, delimiter=",", skipinitialspace=True, quotechar="'"))
         if len(reader_file1) == len(reader_file2) or len(reader_file1) + 1 == len(reader_file2):
             for num, actual_lines in enumerate(reader_file1):
                 data = {}
@@ -350,7 +365,8 @@ def task2_analyze_tracing(uid: str, csv_gt: str):
                         data['Correct predicted'] = False
 
                     if actual_lines[fieldnames[1]] == "Yes" and predicted_lines[fieldnames[1]] == "Yes":
-                        precision_recall = compare_lines(actual_lines[fieldnames[2]], predicted_lines[fieldnames[2]], AMOUNT_LINES_IN_GROUND_TRUTH_CODE)
+                        precision_recall = compare_lines(actual_lines[fieldnames[2]], predicted_lines[fieldnames[2]],
+                                                         AMOUNT_LINES_IN_GROUND_TRUTH_CODE)
                         data['Precision'] = precision_recall[0]
                         data['Recall'] = precision_recall[1]
 
