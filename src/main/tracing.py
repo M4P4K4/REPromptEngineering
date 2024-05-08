@@ -27,7 +27,7 @@ class GPTModel(Enum):
 
 
 AMOUNT_LINES_IN_GROUND_TRUTH_CODE = 143
-SUB_DIR = "../../outputs/rq1/"
+SUB_DIR = "../../outputs/rq2_all_smells/"
 
 
 # store your keys in "variables.env"
@@ -40,22 +40,25 @@ client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 # list of all available parameters: https://platform.openai.com/docs/api-reference/chat/create
 def main():
     # Step 1: Trace Requirements
-    # all_smells = [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]
-    smells = []
-    # for x in range(4):
-    #     task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
+    # All SMELLS: [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]
+    # smells = [8]
+    # all_smells = [[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]]
+    all_smells = [[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]]
+    # for smells in all_smells:
+    #     for x in range(5):
+    #         task2_trace_requirements(Game.DICE, GPTModel.GPT_4, smells, 0)
     # print(random.choices(smells, k=2))
 
     # Step 2: Analyze the tracing & evaluate Performance
-    csv_gt = ["groundTruthTracing_DiceGame_Alessio",
-              "groundTruthTracing_DiceGame_Chetan",
-              "groundTruthTracing_DiceGame_unification",
-              "groundTruthTracing_DiceGame_intersection"]
-    # csv_gt = ["groundTruthTracing_DiceGame_unification"]
+    # csv_gt = ["groundTruthTracing_DiceGame_Alessio",
+    #           "groundTruthTracing_DiceGame_Chetan",
+    #           "groundTruthTracing_DiceGame_unification",
+    #           "groundTruthTracing_DiceGame_intersection"]
+    csv_gt = ["groundTruthTracing_DiceGame_unification"]
     for csv_name in csv_gt:
-        datasets = build_datasets(csv_name, smells)
+        datasets = build_datasets(csv_name, all_smells)
         evaluate_performance(datasets)
-        # build_boxplot(datasets, smells)
+        build_boxplot(datasets, all_smells)
 
 
 def build_boxplot(datasets, smells):
@@ -75,11 +78,12 @@ def build_datasets(csv_name, smells):
     print(csv_name.split("_")[2].upper())
 
     with open(SUB_DIR + "overview.csv") as csv_file:
-        fn = ["UID", "Smelly Rules"]
+        fn = ["UID", "Smelly Rules", "Additional Infos"]
         reader_file = list(csv.DictReader(csv_file, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
         for num, line in enumerate(reader_file):
-            if line[fn[1]] == str(smells):
-                datasets.append(task2_analyze_tracing(line[fn[0]], csv_name))
+            for smell in smells:
+                if line[fn[1]] == str(smell) and "error" not in line[fn[2]]:
+                    datasets.append(task2_analyze_tracing(line[fn[0]], csv_name))
 
     return datasets
 
@@ -119,35 +123,37 @@ def evaluate_performance(datasets):
 
 def evaluate_performance_per_ruleid(datasets, measurement_type):
     d = {
-        "1": [-1, -1, -1, -1, -1],
-        "2": [-1, -1, -1, -1, -1],
-        "3": [-1, -1, -1, -1, -1],
-        "4": [-1, -1, -1, -1, -1],
-        "5": [-1, -1, -1, -1, -1],
-        "6": [-1, -1, -1, -1, -1],
-        "7": [-1, -1, -1, -1, -1],
-        "8": [-1, -1, -1, -1, -1],
-        "9": [-1, -1, -1, -1, -1],
-        "10": [-1, -1, -1, -1, -1],
-        "11": [-1, -1, -1, -1, -1],
-        "12": [-1, -1, -1, -1, -1],
-        "13": [-1, -1, -1, -1, -1],
-        "15": [-1, -1, -1, -1, -1],
-        "16": [-1, -1, -1, -1, -1],
-        "17": [-1, -1, -1, -1, -1],
-        "18": [-1, -1, -1, -1, -1],
-        "19": [-1, -1, -1, -1, -1],
-        "20": [-1, -1, -1, -1, -1],
-        "21": [-1, -1, -1, -1, -1]
+        "1": [],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": [],
+        "6": [],
+        "7": [],
+        "8": [],
+        "9": [],
+        "10": [],
+        "11": [],
+        "12": [],
+        "13": [],
+        "14": [],
+        "15": [],
+        "16": [],
+        "17": [],
+        "18": [],
+        "19": [],
+        "20": [],
+        "21": []
     }
+
     for idx, dataset in enumerate(datasets):
         for data in dataset:
             if measurement_type in data:
-                d[data['Rule ID']][idx] = round(data[measurement_type], 2)
+                d[data['Rule ID']].append(round(data[measurement_type], 2))
 
     values = []
     for key, value in d.items():
-        if value[0] != -1:
+        # if value[0] != -1:
             values = [*values, *value]
         # print(key, value, "Average ", np.mean(value))
 
@@ -174,28 +180,40 @@ def write_output_to_files(uid: str, prompt: str, output: ChatCompletion, smells=
         f.write(content)
         f.close()
 
+    error = ""
+    if not content:
+        error = "error"
+
     with open(SUB_DIR + "/overview.csv", "a") as f:
-        # f.write("'UID', 'Smelly Rules'\n")
-        f.write("'" + uid + "', '" + str(smells) + "'\n")
+        # f.write("'UID', 'Smelly Rules', 'Additional Infos'\n")
+        f.write("'" + uid + "', '" + str(smells) + "', '" + error + "'\n")
+
+    return True if not error else False
 
 
 def clean_content(content):
+    error = False
     if not content.startswith("Rule ID") and not content.startswith("'Rule ID") and not content.startswith("\"Rule ID"):
-        content = content.split("```")[1]
-        content = re.sub("^\\s*", "", content)
+        if "```" in content:
+            content = content.split("```")[1]
+            content = re.sub("^\\s*", "", content)
+        else:
+            error = True
     new_content = ""
-    for idx, line in enumerate(content.split("\n")):
-        if "'" not in line and "\"" not in line:
-            line_split = line.split(",", 2)
-            line = ""
-            for i in range(len(line_split)):
-                if i != 0:
-                    line += ","
-                if line_split[i]:
-                    line += "'" + line_split[i] + "'"
-        new_content += line + "\n"
-
-    return new_content.replace("\"", "'")
+    if not error:
+        for idx, line in enumerate(content.split("\n")):
+            if "'" not in line and "\"" not in line:
+                line_split = line.split(",", 2)
+                line = ""
+                for i in range(len(line_split)):
+                    if i != 0:
+                        line += ","
+                    if line_split[i]:
+                        line += "'" + line_split[i] + "'"
+            new_content += line + "\n"
+        return new_content.replace("\"", "'")
+    else:
+        return ""
 
 
 def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
@@ -232,8 +250,8 @@ def task2_trace_requirements(game: Game, model: GPTModel, smells, temperature=0)
     output = prompt_in_chatgpt(prompt, model, temperature)
     uid = str(uuid.uuid4())
 
-    write_output_to_files(uid, prompt, output, smells)
-    print("Finished: " + uid)
+    no_error = write_output_to_files(uid, prompt, output, smells)
+    print("Finished:", uid, smells, no_error)
 
 
 def create_prompt(game: Game, smells: list[int]):
