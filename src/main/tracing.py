@@ -44,6 +44,7 @@ class Smells(Enum):
     LEXIC = [[[8, 9, 10, 19]], "../../outputs/rq3_lexic/", "Lexic Smells"]
     SEMANTIC = [[[11, 14, 15, 20]], "../../outputs/rq3_semantic/", "Semantic Smells"]
     SYNTAX = [[[16, 17, 18, 21]], "../../outputs/rq3_syntax/", "Syntax Smells"]
+    # CUSTOM = [[[16]], "../../outputs/rq2_1_smell/", "One Smell"]
 
 
 class ReferenceTracing(Enum):
@@ -58,7 +59,7 @@ def main():
     #### Step 1: Trace Requirements ####
     tracing = False
     ## Select Settings
-    smells = Smells.NONE
+    smells = Smells.SYNTAX
     game = Game.DICE
     model = GPTModel.GPT_4
     temperature = 0
@@ -73,7 +74,7 @@ def main():
     ## Select Settings
     reference_tracings = [ReferenceTracing.UNIFICATION]
     smells = [Smells.NONE, Smells.ONE, Smells.ALL]
-    create_boxplot = True
+    create_boxplot = False
 
     if analyzing:
         # analyze_tracing(reference_tracings, smells, create_boxplot)
@@ -98,18 +99,23 @@ def analyze_tracing(reference_tracings, smells, create_boxplot):
             dataset = build_datasets(reference.value, smell, sub_dir)
             datasets.append(dataset)
             evaluate_performance(dataset)
-        build_boxplot(datasets, labels)
+        if create_boxplot:
+            build_boxplot(datasets, labels)
 
 
 def analyze_tracing_per_requirement(csv_name):
     datasets = []
-    precision_per_ruleid, precision_per_ruleid_smelly = {}, {}
-    recall_per_ruleid, recall_per_ruleid_smelly = {}, {}
+    len_datasets = 0
 
     items = {"Rule ID": [],
              "Precision": [],
              "Recall": [],
              "Smelly": []}
+
+    items_implementation = {"Rule ID": [],
+                            "Implemented": [],
+                            "Correct predicted": [],
+                            "Smelly": []}
 
     for s in Smells:
         smells = s.value[0]
@@ -123,6 +129,21 @@ def analyze_tracing_per_requirement(csv_name):
                     items["Precision"].append(d["Precision"])
                     items["Recall"].append(d["Recall"])
                     items["Smelly"].append(d["Smelly"])
+
+                len_datasets += 1
+                if not d["Correct predicted"]:
+                    items_implementation["Rule ID"].append(d["Rule ID"])
+                    items_implementation["Implemented"].append(d["Implemented"])
+                    items_implementation["Correct predicted"].append(d["Correct predicted"])
+                    items_implementation["Smelly"].append(d["Smelly"])
+                    # print(d)
+
+    print(len_datasets)
+    print("False Implementations:")
+    print(items_implementation["Rule ID"].count("11"))
+    print(items_implementation["Rule ID"].count("15"))
+    for item in enumerate(items_implementation.items()):
+        print(item)
 
     fig, axes = plot.subplots(1, 2, sharey=True)
 
@@ -178,7 +199,7 @@ def build_datasets(csv_name, smells, sub_dir):
         lines = list(csv.DictReader(csv_file, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
         for num, line in enumerate(lines):
             for smell in smells:
-                if line[fn[1]] == str(smell) and "error" not in line[fn[2]]:
+                if line[fn[1]] == str(smell) and "error" not in line[fn[2]] and "deleted" not in line[fn[2]]:
                     datasets.append(evaluate_loc_tracing(line[fn[0]], csv_name, smell, sub_dir))
     return datasets
 
