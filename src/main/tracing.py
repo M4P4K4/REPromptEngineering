@@ -33,23 +33,22 @@ class Game(Enum):
 
 
 class GPTModel(Enum):
-    # GPT_3 = "gpt-3.5-turbo-16k"
+    GPT_3 = "gpt-3.5-turbo-16k"
     GPT_4 = "gpt-4"
 
 
 class Smells(Enum):
-    NONE = [[[]], "../../outputs/rq1/", "Smell-free"]
-    ONE = [[[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]], "../../outputs/rq2_1_smell/", "One Smell"]
-    ALL = [[[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]], "../../outputs/rq2_all_smells/", "All Smells"]
-    LEXIC = [[[8, 9, 10, 19]], "../../outputs/rq3_lexic/", "Lexic Smells"]
-    SEMANTIC = [[[11, 14, 15, 20]], "../../outputs/rq3_semantic/", "Semantic Smells"]
-    SYNTAX = [[[16, 17, 18, 21]], "../../outputs/rq3_syntax/", "Syntax Smells"]
-    # CUSTOM = [[[16]], "../../outputs/rq2_1_smell/", "One Smell"]
+    NONE = [[[]], "../../GPT-4 outputs/[RQ1] no smell/", "Smell-free"]
+    ONE = [[[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]], "../../GPT-4 outputs/[RQ2] one smell/", "One Smell"]
+    ALL = [[[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]], "../../GPT-4 outputs/[RQ2] all smells/", "All Smells"]
+    LEXIC = [[[8, 9, 10, 19]], "../../GPT-4 outputs/[RQ3] lexical smells/", "Lexic Smells"]
+    SEMANTIC = [[[11, 14, 15, 20]], "../../GPT-4 outputs/[RQ3] semantic smells/", "Semantic Smells"]
+    SYNTAX = [[[16, 17, 18, 21]], "../../GPT-4 outputs/[RQ3] syntactic smells/", "Syntax Smells"]
 
 
 class ReferenceTracing(Enum):
-    ALESSIO = "groundTruthTracing_DiceGame_Alessio"
-    CHETAN = "groundTruthTracing_DiceGame_Chetan"
+    EXPERT1 = "groundTruthTracing_DiceGame_Expert1"
+    EXPERT2 = "groundTruthTracing_DiceGame_Expert2"
     INTERSECTION = "groundTruthTracing_DiceGame_intersection"
     UNIFICATION = "groundTruthTracing_DiceGame_unification"
 
@@ -63,10 +62,11 @@ def main():
     game = Game.DICE
     model = GPTModel.GPT_4
     temperature = 0
+    top_p = None
     number_of_iterations = 5
 
     if tracing:
-        trace_requirements(smells, game, model, temperature, number_of_iterations)
+        trace_requirements(smells, game, model, temperature, top_p, number_of_iterations)
     # print(random.choices(Smells.ALL.value[0][0], k=2))  # to select two random smells
 
     #### Step 2: Analyze the tracing & evaluate Performance ####
@@ -81,12 +81,12 @@ def main():
         analyze_tracing_per_requirement(ReferenceTracing.UNIFICATION.value)
 
 
-def trace_requirements(smells, game, model, temperature, number_of_iterations):
+def trace_requirements(smells, game, model, temperature, top_p, number_of_iterations):
     all_smells = smells.value[0]
     sub_dir = smells.value[1]
     for smell in all_smells:
         for x in range(number_of_iterations):
-            task2_trace_requirements(game, model, smell, sub_dir, temperature)
+            task2_trace_requirements(game, model, smell, sub_dir, temperature, top_p)
 
 
 def analyze_tracing(reference_tracings, smells, create_boxplot):
@@ -307,10 +307,11 @@ def clean_content(content):
         return ""
 
 
-def prompt_in_chatgpt(given_prompt, model, temperature, max_tokens=None):
+def prompt_in_chatgpt(given_prompt, model, temperature, top_p, max_tokens=None):
     return client.chat.completions.create(
         model=model.value,
         temperature=temperature,
+        top_p=top_p,
         max_tokens=max_tokens,
         messages=[{
             "role": "user",
@@ -336,13 +337,19 @@ def get_all_requirements(smells, game):
     return prompt.rstrip()
 
 
-def task2_trace_requirements(game: Game, model: GPTModel, smells, sub_dir, temperature=0):
+def task2_trace_requirements(game: Game, model: GPTModel, smells, sub_dir, temperature=1, top_p=1):
     prompt = create_prompt(game, smells)
-    output = prompt_in_chatgpt(prompt, model, temperature)
+
+    if not temperature:
+        temperature = 1
+    if not top_p:
+        top_p = 1
+
+    output = prompt_in_chatgpt(prompt, model, temperature, top_p)
     uid = str(uuid.uuid4())
 
     no_error = write_output_to_files(uid, prompt, output, sub_dir, smells)
-    print("Finished:", uid, smells, no_error)
+    print("Finished:", uid, smells, "No error:", no_error)
 
 
 def create_prompt(game: Game, smells: list[int]):
@@ -359,7 +366,7 @@ def create_prompt(game: Game, smells: list[int]):
 
 def get_code_with_linenumbering():
     code = ""
-    with open("../../src/Code Output/src/groundTruth/DiceGame.java") as codefile:
+    with open("../../Groundtruth Code/src/groundTruth/DiceGame.java") as codefile:
         idx = 1
         for line in codefile:
             line = line.split("//")  # removes every comment
@@ -421,7 +428,7 @@ def evaluate_loc_tracing(uid: str, csv_gt: str, smells, sub_dir):
     fn = ['Rule ID', 'Is it implemented?', 'Is it implemented? (smelly)', 'Lines of implementation in source code']
     dataset = []
 
-    with (open("../../cases/" + csv_gt + ".csv") as ref_csv, open(sub_dir + "/csv/csv_" + uid + ".csv") as gpt_csv):
+    with (open("../../Groundtruth Tracings/" + csv_gt + ".csv") as ref_csv, open(sub_dir + "/csv/csv_" + uid + ".csv") as gpt_csv):
         ref_lines = list(csv.DictReader(ref_csv, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
         gpt_lines = list(csv.DictReader(gpt_csv, fieldnames=fn, delimiter=",", skipinitialspace=True, quotechar="'"))
         if len(ref_lines) == len(gpt_lines):
