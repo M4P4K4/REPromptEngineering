@@ -4,9 +4,6 @@ import re
 import uuid
 import numpy as np
 import matplotlib.pyplot as plot
-import seaborn as sns
-import pandas as pd
-import random
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -24,12 +21,12 @@ API_KEY = os.getenv("API_KEY")
 ORG_KEY = os.getenv("ORG_KEY")
 client = OpenAI(organization=ORG_KEY, api_key=API_KEY)
 
+# Length of the groundtruth code
 LEN_GROUNDTRUTH_CODE = 143
 
 
 class Game(Enum):
     DICE = "dice"
-    # SCOPA = "scopa"
 
 
 class GPTModel(Enum):
@@ -38,6 +35,8 @@ class GPTModel(Enum):
 
 
 class Smells(Enum):
+    # Structure: [[[Smell Variant 1], [Smell Variant 2], ...], "Path to results", "Label for Boxplot"]
+    # -> The outer array is iterated through, passing the inner array as a list of all smells for each prompt iteration
     NONE = [[[]], "../../GPT-4 outputs/[RQ1] no smell/", "Smell-free"]
     ONE = [[[8], [9], [10], [11], [14], [15], [16], [17], [18], [19], [20], [21]], "../../GPT-4 outputs/[RQ2] one smell/", "One Smell"]
     ALL = [[[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]], "../../GPT-4 outputs/[RQ2] all smells/", "All Smells"]
@@ -57,27 +56,28 @@ class ReferenceTracing(Enum):
 def main():
     #### Step 1: Trace Requirements ####
     tracing = False
-    ## Select Settings
+    #### Select Settings
     smells = Smells.SYNTAX
     game = Game.DICE
     model = GPTModel.GPT_4
     temperature = 0
     top_p = None
-    number_of_iterations = 5
+    iterations = 5
 
     if tracing:
-        trace_requirements(smells, game, model, temperature, top_p, number_of_iterations)
-    # print(random.choices(Smells.ALL.value[0][0], k=2))  # to select two random smells
+        trace_requirements(smells, game, model, temperature, top_p, iterations)
 
     #### Step 2: Analyze the tracing & evaluate Performance ####
     analyzing = True
-    ## Select Settings
+    #### Select Settings
+    # reference_tracings = [ReferenceTracing.EXPERT1, ReferenceTracing.EXPERT2, ReferenceTracing.UNIFICATION, ReferenceTracing.INTERSECTION]
     reference_tracings = [ReferenceTracing.UNIFICATION]
-    smells = [Smells.NONE, Smells.ONE, Smells.ALL]
-    create_boxplot = False
+    # smells = [Smells.NONE, Smells.ONE, Smells.ALL]
+    smells = [Smells.LEXIC, Smells.SEMANTIC, Smells.SYNTAX]
+    create_boxplot = True
 
     if analyzing:
-        # analyze_tracing(reference_tracings, smells, create_boxplot)
+        analyze_tracing(reference_tracings, smells, create_boxplot)
         analyze_tracing_per_requirement(ReferenceTracing.UNIFICATION.value)
 
 
@@ -95,69 +95,138 @@ def analyze_tracing(reference_tracings, smells, create_boxplot):
         for s in smells:
             smell = s.value[0]
             sub_dir = s.value[1]
-            labels.append(s.value[2])
             dataset = build_datasets(reference.value, smell, sub_dir)
             datasets.append(dataset)
-            evaluate_performance(dataset)
+            len_dataset = evaluate_performance(dataset)
+            labels.append(s.value[2] + "\n n = " + str(len_dataset))
         if create_boxplot:
             build_boxplot(datasets, labels)
 
 
 def analyze_tracing_per_requirement(csv_name):
     datasets = []
-    len_datasets = 0
-
-    items = {"Rule ID": [],
-             "Precision": [],
-             "Recall": [],
-             "Smelly": []}
-
-    items_implementation = {"Rule ID": [],
-                            "Implemented": [],
-                            "Correct predicted": [],
-                            "Smelly": []}
 
     for s in Smells:
         smells = s.value[0]
         sub_dir = s.value[1]
         datasets.append(build_datasets(csv_name, smells, sub_dir))
+
+    analyze_tp1_per_requirement(datasets)
+    analyze_tp2_per_requirement(datasets)
+
+
+def analyze_tp1_per_requirement(datasets):
+    tp1_not_smelly = {}
+    tp1_smelly = {}
+
     for dataset in datasets:
         for data in dataset:
             for d in data:
-                if "Precision" in d and "Recall" in d and int(d["Rule ID"]) in [8, 9, 10, 16, 17, 18, 19, 20, 21]:
-                    items["Rule ID"].append(d["Rule ID"])
-                    items["Precision"].append(d["Precision"])
-                    items["Recall"].append(d["Recall"])
-                    items["Smelly"].append(d["Smelly"])
+                rule_id = d["Rule ID"]
+                smelly = d["Smelly"]
 
-                len_datasets += 1
-                if not d["Correct predicted"]:
-                    items_implementation["Rule ID"].append(d["Rule ID"])
-                    items_implementation["Implemented"].append(d["Implemented"])
-                    items_implementation["Correct predicted"].append(d["Correct predicted"])
-                    items_implementation["Smelly"].append(d["Smelly"])
-                    # print(d)
+                implemented = d['Implemented']
+                correct_predicted = d['Correct predicted']
 
-    print(len_datasets)
-    print("False Implementations:")
-    print(items_implementation["Rule ID"].count("11"))
-    print(items_implementation["Rule ID"].count("15"))
-    for item in enumerate(items_implementation.items()):
-        print(item)
+                if implemented:
+                    if correct_predicted:
+                        case = "tp"
+                    else:
+                        case = "fn"
+                else:
+                    if correct_predicted:
+                        case = "tn"
+                    else:
+                        case = "fp"
+                if smelly:
+                    if rule_id in tp1_smelly:
+                        tp1_smelly[rule_id].append(case)
+                    else:
+                        tp1_smelly[rule_id] = [case]
+                else:
+                    if rule_id in tp1_not_smelly:
+                        tp1_not_smelly[rule_id].append(case)
+                    else:
+                        tp1_not_smelly[rule_id] = [case]
 
-    fig, axes = plot.subplots(1, 2, sharey=True)
+    print("------------------------------------")
+    print("TP1 non-smelly")
+    for item in tp1_not_smelly.items():
+        print_item_tp1(item)
+    print("------------------------------------")
+    print("TP1 smelly")
+    for item in tp1_smelly.items():
+        print_item_tp1(item)
 
-    ax1 = sns.boxplot(x=items["Rule ID"], y=items["Precision"], hue=items["Smelly"], ax=axes[0])
-    ax1.grid(axis="y", linestyle="--")
-    ax1.legend(title="Smelly Req.?")
-    ax1.set(xlabel="Requirement", title="Precision")
 
-    ax2 = sns.boxplot(x=items["Rule ID"], y=items["Recall"], hue=items["Smelly"], ax=axes[1])
-    ax2.grid(axis="y", linestyle="--")
-    ax2.legend(title="Smelly Req.?")
-    ax2.set(xlabel="Requirement", title="Recall")
-    # sns.move_legend(ax2, "upper left", bbox_to_anchor=(1, 1))
-    plot.show()
+def print_item_tp1(item):
+    tp = item[1].count("tp")
+    tn = item[1].count("tn")
+    fp = item[1].count("fp")
+    fn = item[1].count("fn")
+    print("Requirement", item[0],
+          "\ttrue:", tp + tn,
+          "\tfalse:", fp + fn,
+          "\ttp:", tp,
+          "\ttn:", tn,
+          "\tfp:", fp,
+          "\tfn:", fn
+          )
+
+
+def analyze_tp2_per_requirement(datasets):
+    tp2_not_smelly_precision, tp2_not_smelly_recall = {}, {}
+    tp2_smelly_precision, tp2_smelly_recall = {}, {}
+
+    for dataset in datasets:
+        for data in dataset:
+            for d in data:
+                rule_id = d["Rule ID"]
+                smelly = d["Smelly"]
+
+                ## Evaluating TP2
+                if "Precision" in d:
+                    if smelly:
+                        if rule_id in tp2_smelly_precision:
+                            tp2_smelly_precision[rule_id].append(d["Precision"])
+                            tp2_smelly_recall[rule_id].append(d["Recall"])
+                        else:
+                            tp2_smelly_precision[rule_id] = [d["Precision"]]
+                            tp2_smelly_recall[rule_id] = [d["Recall"]]
+                    else:
+                        if d["Rule ID"] in tp2_not_smelly_precision:
+                            tp2_not_smelly_precision[rule_id].append(d["Precision"])
+                            tp2_not_smelly_recall[rule_id].append(d["Recall"])
+                        else:
+                            tp2_not_smelly_precision[rule_id] = [d["Precision"]]
+                            tp2_not_smelly_recall[rule_id] = [d["Recall"]]
+
+    print("------------------------------------")
+    print("TP2 non-smelly PRECISION")
+    for item in tp2_not_smelly_precision.items():
+        print_item_tp2(item)
+    print("------------------------------------")
+    print("TP2 smelly PRECISION")
+    for item in tp2_smelly_precision.items():
+        print_item_tp2(item)
+    print("------------------------------------")
+    print("TP2 non-smelly RECALL")
+    for item in tp2_not_smelly_recall.items():
+        print_item_tp2(item)
+    print("------------------------------------")
+    print("TP2 smelly RECALL")
+    for item in tp2_smelly_recall.items():
+        print_item_tp2(item)
+
+
+def print_item_tp2(item):
+    print("Requirement", item[0],
+          "\tSize:", len(item[1]),
+          "\tMin:", round(np.min(item[1]), 2),
+          "\tMax:", round(np.max(item[1]), 2),
+          "\tAverage:", round(np.average(item[1]), 2),
+          "\tMedian:", round(np.median(item[1]), 2)
+          )
 
 
 def build_boxplot(datasets, labels):
@@ -186,6 +255,8 @@ def build_boxplot(datasets, labels):
     ax2.set_title("Recall")
 
     fig.tight_layout()
+    # fig.savefig("../../Tracing Results/Tracing RQ1 & RQ2")
+    # fig.savefig("../../Tracing Results/Tracing RQ3")
     plot.show()
 
 
@@ -215,8 +286,8 @@ def evaluate_performance(datasets):
             implemented = data['Implemented']
             correct_predicted = data['Correct predicted']
 
-            if implemented:
-                if correct_predicted:
+            if implemented:  # is the requirement implemented in the code?
+                if correct_predicted:  # did ChatGPT correctly predict it?
                     tp += 1
                 else:
                     fn += 1
@@ -236,6 +307,8 @@ def evaluate_performance(datasets):
     print("Impl. Prediction:\t", precision_recall, "\t", (tp + tn + fp + fn), "\t(Precision/Recall/Dataset size)")
     precision_recall = [round(loc_precision, 2), round(loc_recall, 2)]
     print("LOC Prediction:\t\t", precision_recall, "\t", len_datasets, "\t(Precision/Recall/Dataset size)")
+
+    return len_datasets
 
 
 def evaluate_performance_per_ruleid(datasets, measurement_type):
@@ -378,16 +451,17 @@ def get_code_with_linenumbering():
     return code
 
 
-def compare_lines(real_data, prediction, amount_lines):
+def compare_lines(real_data, prediction, len_all_lines):
     lines_real_data = get_all_lines(real_data)
     lines_prediction = get_all_lines(prediction)
+
     tp = 0
-    tn = amount_lines - len(lines_prediction)
+    tn = len_all_lines - len(lines_prediction)
     fp = len(lines_prediction)
     fn = 0
 
-    for line in lines_real_data:
-        if line in lines_prediction:
+    for line in lines_real_data:  # LOC in the ground truth
+        if line in lines_prediction:  # LOC that GPT-4 predicted
             tp += 1
             fp -= 1
         else:
@@ -441,6 +515,7 @@ def evaluate_loc_tracing(uid: str, csv_gt: str, smells, sub_dir):
                     ref_impl = get_implementation(ref_line[fn[2 if smelly else 1]])
                     gpt_impl = get_implementation(gpt_line[fn[1]])
 
+                    # if ref_impl is not None and int(ref_id) in [8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20, 21]:
                     if ref_impl is not None:  # only appends data if requirement is implemented
                         data = {
                             'Rule ID': ref_id,
