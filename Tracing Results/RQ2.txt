@@ -1,0 +1,7 @@
+One Smell
+Impl. Prediction:	 [0.99, 1.0] 	 1205 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.71, 0.84] 	 1010 	(Precision/Recall/Dataset size)
+------------------------------------
+All Smells
+Impl. Prediction:	 [0.88, 1.0] 	 105 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.66, 0.89] 	 75 	(Precision/Recall/Dataset size)
