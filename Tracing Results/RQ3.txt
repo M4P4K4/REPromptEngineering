@@ -1,0 +1,11 @@
+Lexic Smells
+Impl. Prediction:	 [1.0, 1.0] 	 100 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.69, 0.81] 	 85 	(Precision/Recall/Dataset size)
+------------------------------------
+Semantic Smells
+Impl. Prediction:	 [0.88, 1.0] 	 105 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.65, 0.81] 	 75 	(Precision/Recall/Dataset size)
+------------------------------------
+Syntax Smells
+Impl. Prediction:	 [1.0, 1.0] 	 100 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.74, 0.86] 	 85 	(Precision/Recall/Dataset size)

@@ -1,0 +1,89 @@
+TP1 non-smelly
+Requirement 1 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 2 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 3 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 4 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 5 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 6 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 7 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 8 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 9 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 10 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 11 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 12 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 13 	true: 85 	false: 0 	tp: 85 	tn: 0 	fp: 0 	fn: 0
+Requirement 15 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 16 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 17 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 18 	true: 70 	false: 0 	tp: 70 	tn: 0 	fp: 0 	fn: 0
+Requirement 19 	true: 70 	false: 0 	tp: 0 	tn: 70 	fp: 0 	fn: 0
+Requirement 20 	true: 70 	false: 0 	tp: 0 	tn: 70 	fp: 0 	fn: 0
+Requirement 21 	true: 70 	false: 0 	tp: 0 	tn: 70 	fp: 0 	fn: 0
+------------------------------------
+TP1 smelly
+Requirement 8 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 9 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 10 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 11 	true: 0 	false: 15 	tp: 0 	tn: 0 	fp: 15 	fn: 0
+Requirement 14 	true: 15 	false: 0 	tp: 0 	tn: 15 	fp: 0 	fn: 0
+Requirement 15 	true: 0 	false: 15 	tp: 0 	tn: 0 	fp: 15 	fn: 0
+Requirement 16 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 17 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 18 	true: 15 	false: 0 	tp: 15 	tn: 0 	fp: 0 	fn: 0
+Requirement 19 	true: 15 	false: 0 	tp: 0 	tn: 15 	fp: 0 	fn: 0
+Requirement 20 	true: 15 	false: 0 	tp: 0 	tn: 15 	fp: 0 	fn: 0
+Requirement 21 	true: 15 	false: 0 	tp: 0 	tn: 15 	fp: 0 	fn: 0
+------------------------------------
+TP2 non-smelly PRECISION
+Requirement 1 	Size: 85 	Min: 0.02 	Max: 0.02 	Average: 0.02 	Median: 0.02
+Requirement 2 	Size: 85 	Min: 0.0 	Max: 1.0 	Average: 0.43 	Median: 0.5
+Requirement 3 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 4 	Size: 85 	Min: 0.11 	Max: 1.0 	Average: 0.15 	Median: 0.12
+Requirement 5 	Size: 85 	Min: 0.5 	Max: 1.0 	Average: 0.93 	Median: 1.0
+Requirement 6 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 7 	Size: 85 	Min: 0.03 	Max: 1.0 	Average: 0.21 	Median: 0.03
+Requirement 8 	Size: 70 	Min: 0.39 	Max: 0.48 	Average: 0.46 	Median: 0.48
+Requirement 9 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 10 	Size: 70 	Min: 0.5 	Max: 0.5 	Average: 0.5 	Median: 0.5
+Requirement 11 	Size: 70 	Min: 0.5 	Max: 1.0 	Average: 0.84 	Median: 0.8
+Requirement 12 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 13 	Size: 85 	Min: 0.5 	Max: 1.0 	Average: 0.99 	Median: 1.0
+Requirement 15 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 16 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 17 	Size: 70 	Min: 0.5 	Max: 0.5 	Average: 0.5 	Median: 0.5
+Requirement 18 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+------------------------------------
+TP2 smelly PRECISION
+Requirement 8 	Size: 15 	Min: 0.41 	Max: 0.48 	Average: 0.45 	Median: 0.44
+Requirement 9 	Size: 15 	Min: 0.86 	Max: 1.0 	Average: 0.99 	Median: 1.0
+Requirement 10 	Size: 15 	Min: 0.5 	Max: 1.0 	Average: 0.54 	Median: 0.5
+Requirement 16 	Size: 15 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 17 	Size: 15 	Min: 0.5 	Max: 0.5 	Average: 0.5 	Median: 0.5
+Requirement 18 	Size: 15 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+------------------------------------
+TP2 non-smelly RECALL
+Requirement 1 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 2 	Size: 85 	Min: 0.0 	Max: 1.0 	Average: 0.78 	Median: 1.0
+Requirement 3 	Size: 85 	Min: 0.77 	Max: 0.92 	Average: 0.91 	Median: 0.92
+Requirement 4 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 5 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 6 	Size: 85 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 7 	Size: 85 	Min: 0.5 	Max: 0.5 	Average: 0.5 	Median: 0.5
+Requirement 8 	Size: 70 	Min: 0.92 	Max: 0.92 	Average: 0.92 	Median: 0.92
+Requirement 9 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 10 	Size: 70 	Min: 0.5 	Max: 0.5 	Average: 0.5 	Median: 0.5
+Requirement 11 	Size: 70 	Min: 0.14 	Max: 1.0 	Average: 0.5 	Median: 0.57
+Requirement 12 	Size: 85 	Min: 0.67 	Max: 1.0 	Average: 0.84 	Median: 1.0
+Requirement 13 	Size: 85 	Min: 0.75 	Max: 0.75 	Average: 0.75 	Median: 0.75
+Requirement 15 	Size: 70 	Min: 0.67 	Max: 0.78 	Average: 0.77 	Median: 0.78
+Requirement 16 	Size: 70 	Min: 0.43 	Max: 1.0 	Average: 0.67 	Median: 0.57
+Requirement 17 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 18 	Size: 70 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+------------------------------------
+TP2 smelly RECALL
+Requirement 8 	Size: 15 	Min: 0.92 	Max: 0.92 	Average: 0.92 	Median: 0.92
+Requirement 9 	Size: 15 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 10 	Size: 15 	Min: 0.5 	Max: 1.0 	Average: 0.57 	Median: 0.5
+Requirement 16 	Size: 15 	Min: 0.43 	Max: 1.0 	Average: 0.76 	Median: 0.86
+Requirement 17 	Size: 15 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0
+Requirement 18 	Size: 15 	Min: 1.0 	Max: 1.0 	Average: 1.0 	Median: 1.0

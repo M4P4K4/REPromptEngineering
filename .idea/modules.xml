@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/src/Code Output/Code Output.iml" filepath="$PROJECT_DIR$/src/Code Output/Code Output.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Groundtruth Code/Groundtruth Code.iml" filepath="$PROJECT_DIR$/Groundtruth Code/Groundtruth Code.iml" />
       <module fileurl="file://$PROJECT_DIR$/REPromptEngineering.iml" filepath="$PROJECT_DIR$/REPromptEngineering.iml" />
     </modules>
   </component>

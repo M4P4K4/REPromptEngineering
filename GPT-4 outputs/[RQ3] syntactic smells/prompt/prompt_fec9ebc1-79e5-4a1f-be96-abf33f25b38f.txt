@@ -1,0 +1,168 @@
+Look at the following requirements and the code provided below. Write a CSV file with the following columns: 'Rule ID', 'Is it implemented?', 'Lines of implementation in source code' where the last column should be left empty if not correctly implemented.
+The code is:
+1. package groundtruth;
+2. 
+3. import java.util.*;
+4. 
+5. public class DiceGame {
+6.     private static final int MAX_TURNS = 12;
+7.     private static final int MAX_POINTS_DIFFERENCE = 10;
+8.     private static final int MAX_POINTS_COLOR_CHANGE = 10;
+9.     private static final int DICE_SIDES = 6;
+10. 
+11.     private static final String COLOR_RED = "red";
+12.     private static final String COLOR_GREEN = "green";
+13.     private static final String COLOR_BLUE = "blue";
+14.     private static final String COLOR_PURPLE = "purple";
+15. 
+16.     private static class Player {
+17.         String name;
+18.         int points;
+19.         String color;
+20. 
+21.         Player(String name, String color) {
+22.             this.name = name;
+23.             this.points = 0;
+24.             this.color = color;
+25.         }
+26.     }
+27. 
+28.     public static void main(String[] args) {
+29.         Scanner scanner = new Scanner(System.in);
+30.         Random random = new Random();
+31. 
+32.         Player[] players = new Player[3];
+33.         for (int i = 0; i < 3; i++) {
+34.             System.out.println("Enter name for player " + (i + 1) + ":");
+35.             String name = scanner.nextLine();
+36.             while (name.equalsIgnoreCase("Computer")) {
+37.                 System.out.println("Name cannot be Computer. Enter another name:");
+38.                 name = scanner.nextLine();
+39.             }
+40.             String color = getColorForPlayer(i);
+41.             players[i] = new Player(name, color);
+42.         }
+43. 
+44.         List<Player> turnOrder = Arrays.asList(players);
+45.         Collections.shuffle(turnOrder);
+46. 
+47.         int turn = 0;
+48.         boolean turnSkipped = false;
+49.         while (turn < MAX_TURNS) {
+50.             System.out.println("Round " + (turn + 1) + ":");
+51.             for (Player player : turnOrder) {
+52.                 if (!turnSkipped) {
+53.                     int diceCount = random.nextInt(DICE_SIDES) + 1;
+54.                     if (diceCount == 1) {
+55.                         System.out.println("You rolled a 1. Do you want to re-roll? [Y/N]");
+56.                         String reroll = scanner.nextLine();
+57.                         if (reroll.equalsIgnoreCase("Y")) {
+58.                             diceCount = random.nextInt(DICE_SIDES) + 1;
+59.                         }
+60.                     }
+61.                     diceCount = applyDiceModifiers(diceCount);
+62.                     player.points += diceCount;
+63.                     if (player.points > MAX_POINTS_COLOR_CHANGE) {
+64.                         player.color = COLOR_PURPLE;
+65.                     }
+66.                     System.out.println(player.name + " rolled a " + diceCount + ". Total points: " + player.points + " Color: " + player.color);
+67.                     if (checkForWinner(players)) {
+68.                         System.out.println("Congratulations " + player.name + " you won the game! You are the best!");
+69.                         return;
+70.                     }
+71.                     if (diceCount == 6) {
+72.                         turnSkipped = true;
+73.                     }
+74.                     if (checkForEquality(turnOrder)) {
+75.                         System.out.println("Equality!");
+76.                     }
+77.                 } else {
+78.                     turnSkipped = false;
+79.                 }
+80.             }
+81.             turn++;
+82.         }
+83. 
+84.         Player winner = determineWinner(players);
+85.         System.out.println("Congratulations " + winner.name + " you won the game! You are the best!");
+86.     }
+87. 
+88.     private static String getColorForPlayer(int index) {
+89.         return index == 0 ? COLOR_RED : index == 1 ? COLOR_GREEN : COLOR_BLUE;
+90.     }
+91. 
+92.     private static int applyDiceModifiers(int diceCount) {
+93.         if (diceCount == 2) {
+94.             return diceCount * 3;
+95.         } else if (diceCount % 2 == 0) {
+96.             return diceCount / 2;
+97.         }
+98.         return diceCount;
+99.     }
+100. 
+101.     private static boolean checkForWinner(Player[] players) {
+102.         for (Player player : players) {
+103.             if (isWinner(player, players)) {
+104.                 return true;
+105.             }
+106.         }
+107.         return false;
+108.     }
+109. 
+110.     private static boolean isWinner(Player player, Player[] players) {
+111.         for (Player opponent : players) {
+112.             if (opponent != player && player.points - opponent.points >= MAX_POINTS_DIFFERENCE) {
+113.                 boolean allOpponentsLose = true;
+114.                 for (Player otherOpponent : players) {
+115.                     if (otherOpponent != player && otherOpponent != opponent &&
+116.                             player.points - otherOpponent.points < MAX_POINTS_DIFFERENCE) {
+117.                         allOpponentsLose = false;
+118.                         break;
+119.                     }
+120.                 }
+121.                 if (allOpponentsLose) {
+122.                     return true;
+123.                 }
+124.             }
+125.         }
+126.         return false;
+127.     }
+128. 
+129.     private static boolean checkForEquality(List<Player> turnOrder) {
+130.         return turnOrder.get(0).points == turnOrder.get(1).points &&
+131.                 turnOrder.get(1).points == turnOrder.get(2).points;
+132.     }
+133. 
+134.     private static Player determineWinner(Player[] players) {
+135.         Player winner = players[0];
+136.         for (Player player : players) {
+137.             if (player.points > winner.points) {
+138.                 winner = player;
+139.             }
+140.         }
+141.         return winner;
+142.     }
+143. }
+The requirements are:
+ 
+1. A dice-throwing game for three players. 
+2. Every player starts with 0 points. 
+3. The players take turns. 
+4. In each turn, a player must throw a dice. 
+5. The dice count gets added to the player's points. 
+6. After each turn, the system prints the dice count and the player points. 
+7. The game ends after 12 turns. 
+8. The game also terminates if one player has 10 more points than every other player. 
+9. Only if the dice count is 1, the player can decide if he wants to re-roll the dice instead. 
+10. The winner will receive the message: “Congratulations ” + player name + “ you won the game! You are the best!”. 
+11. In the beginning, the player point colors shall be red, green, and blue for player 1, player 2, and player 3 respectively. 
+12. If a player's points get above 11, his point color shall turn purple. 
+13. If the current player throws a 6, the next player’s turn is skipped. 
+14. - 
+15. If the dice count is 2, it shall be tripled. If the dice count is even but not 2, it shall be halved. 
+16. The game shall check the players' points at any point in the game. If they turn equal, it shall print: "Equality!". 
+17. The players’ turn order must be decided at the beginning of the game. 
+18. The players shall enter their names. The players’ names shall not be “Computer”. 
+19. If the dice count is 5, throw again and multiply both dice counts. 
+20. When a player's points get above 5 points, his point color shall turn yellow. 
+21. In each turn, the player doesn't have to throw a dice but allowed to skip his turn.

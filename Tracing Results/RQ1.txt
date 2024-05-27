@@ -1,0 +1,2 @@
+Impl. Prediction:	 [1.0, 1.0] 	 100 	(Precision/Recall/Dataset size)
+LOC Prediction:		 [0.72, 0.85] 	 85 	(Precision/Recall/Dataset size)
